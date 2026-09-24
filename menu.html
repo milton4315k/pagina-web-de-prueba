@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Explorá el menú de Nocturna Pizza: clásicas, especiales y vegetales, con pedido directo por WhatsApp." />
+    <meta name="theme-color" content="#171514" />
+    <title>Menú — Nocturna Pizza</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-page="menu">
+    <a class="skip-link" href="#main-content">Saltar al contenido</a>
+
+    <header class="site-header" id="site-header">
+      <div class="topline">
+        <div class="container topline__inner">
+          <span><span class="topline__highlight">✦</span>&nbsp; Masa lenta · Fuego alto · Noche italiana</span>
+          <span class="topline__desktop">Retiro &amp; entrega · <a href="tel:+5491128493108">11 2849-3108</a></span>
+        </div>
+      </div>
+      <nav class="navbar container" aria-label="Navegación principal">
+        <a class="brand" href="index.html" aria-label="Nocturna Pizza, inicio">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M4.5 13.5c0-4.36 3.36-7.9 7.5-7.9s7.5 3.54 7.5 7.9H4.5Z" fill="currentColor" /><path d="M6.8 13.5c.16 4.3 2.1 6.7 5.2 6.7s5.04-2.4 5.2-6.7H6.8Z" fill="#171514" /><circle cx="9" cy="10.8" r="1" fill="#171514" /><circle cx="14.5" cy="10.3" r="1" fill="#171514" /></svg>
+          </span>
+          <span class="brand-copy">NOCTURNA<small>PIZZA</small></span>
+        </a>
+        <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-nav"><span class="menu-toggle__lines" aria-hidden="true"></span><span class="sr-only">Abrir menú</span></button>
+        <div class="nav-links" id="primary-nav">
+          <a href="index.html" data-nav="home">Inicio</a>
+          <a href="menu.html" data-nav="menu">Menú</a>
+          <a href="contacto.html" data-nav="contact">Contacto</a>
+          <a class="nav-cta" href="https://wa.me/5491128493108" target="_blank" rel="noopener" data-whatsapp="Hola Nocturna Pizza, quiero hacer un pedido.">Pedir por WhatsApp <span class="button-arrow" aria-hidden="true">↗</span></a>
+        </div>
+      </nav>
+    </header>
+
+    <main id="main-content">
+      <section class="page-hero">
+        <div class="container page-hero__grid">
+          <div>
+            <p class="eyebrow"><span class="eyebrow__line"></span> La carta Nocturna</p>
+            <h1>Elegí tu<br /><em>próxima.</em></h1>
+            <p class="lead">Ocho combinaciones de muestra para explorar el universo Nocturna. Cuando carguemos el menú real, vas a encontrar precio, disponibilidad y pedido directo aquí mismo.</p>
+          </div>
+          <aside class="page-hero__aside">
+            <strong>¿Tenés ganas de pedir?</strong>
+            <p>Escribinos por WhatsApp y te ayudamos a elegir según tus ganas, la cantidad de personas y la modalidad.</p>
+            <a class="text-link" href="https://wa.me/5491128493108" target="_blank" rel="noopener" data-whatsapp="Hola Nocturna Pizza, estoy mirando el menú y quiero pedir." style="margin-top: 17px;">Consultar disponibilidad <span aria-hidden="true">↗</span></a>
+          </aside>
+        </div>
+      </section>
+
+      <section class="menu-section">
+        <div class="container">
+          <div class="menu-toolbar">
+            <div class="filter-list" role="group" aria-label="Filtrar menú">
+              <button class="filter-button is-active" type="button" data-filter="all">Todas</button>
+              <button class="filter-button" type="button" data-filter="classic">Clásicas</button>
+              <button class="filter-button" type="button" data-filter="special">Especiales</button>
+              <button class="filter-button" type="button" data-filter="vegetarian">Vegetales</button>
+            </div>
+            <span class="menu-count" data-menu-count>8 pizzas</span>
+          </div>
+
+          <div class="menu-grid">
+            <article class="menu-card reveal" data-category="classic">
+              <div class="menu-card__image"><img src="https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=800&q=85" alt="Nocturna Margherita" loading="lazy" /><span class="card-tag">Clásica</span></div>
+              <div class="menu-card__body">
+                <div class="menu-card__heading"><h3>Nocturna Margherita</h3><span class="price">$ 15.500</span></div>
+                <p>La simplicidad bien hecha: tomate San Marzano, mozzarella fresca, albahaca y aceite de oliva.</p>
+                <ul class="ingredients"><li>Tomate</li><li>Mozzarella</li><li>Albahaca</li></ul>
+                <a class="order-link" href="https://wa.me/5491128493108" target="_blank" rel="noopener" data-order="Nocturna Margherita">Pedir esta pizza <span class="button-arrow" aria-hidden="true">↗</span></a>
+              </div>
+            </article>
+
+            <article class="menu-card reveal" data-category="classic">
+              <div class="menu-card__image"><img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=800&q=85" alt="Nápoles Tradicional" loading="lazy" /><span class="card-tag">Clásica</span></div>
+              <div class="menu-card__body">
+                <div class="menu-card__heading"><h3>Nápoles Tradicional</h3><span class="price">$ 17.200</span></div>
+                <p>Tomate, mozzarella, anchoas, orégano y un toque final de aceite de oliva.</p>
+                <ul class="ingredients"><li>Anchoas</li><li>Orégano</li><li>Oliva</li></ul>
+                <a class="order-link" href="https://wa.me/5491128493108" target="_blank" rel="noopener" data-order="Nápoles Tradicional">Pedir esta pizza <span class="button-arrow" aria-hidden="true">↗</span></a>
+              </div>
+            </article>
+
+            <article class="menu-card reveal" data-category="special">
+              <div class="menu-card__image"><img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=800&q=85" alt="Pepperoni de la Casa" loading="lazy" /><span class="card-tag">Especial</span></div>
+              <div class="menu-card__body">
+                <div class="menu-card__heading"><h3>Pepperoni de la Casa</h3><span class="price">$ 17.900</span></div>
+                <p>Pepperoni artesanal, mozzarella, orégano y un toque de miel picante.</p>
+                <ul class="ingredients"><li>Pepperoni</li><li>Miel picante</li><li>Orégano</li></ul>
+                <a class="order-link" href="https://wa.me/5491128493108" target="_blank" rel="noopener" data-order="Pepperoni de la Casa">Pedir esta pizza <span class="button-arrow" aria-hidden="true">↗</span></a>
+              </div>
+            </article>
+
+            <article class="menu-card reveal" data-category="special">
+              <div class="menu-card__image"><img src="https://images.unsplash.com/photo-1594007654729-407eedc4be65?auto=format&fit=crop&w=800&q=85" alt="Parma Nocturna" loading="lazy" /><span class="card-tag">Especial</span></div>
+              <div class="menu-card__body">
+                <div class="menu-card__heading"><h3>Parma Nocturna</h3><span class="price">$ 19.500</span></div>
+                <p>Jamón crudo, parmesano, rúcula, tomate confitado y aceite de oliva.</p>
+                <ul class="ingredients"><li>Jamón crudo</li><li>Parmesano</li><li>Rúcula</li></ul>
+                <a class="order-link" href="https://wa.me/5491128493108" target="_blank" rel="noopener" data-order="Parma Nocturna">Pedir esta pizza <span class="button-arrow" aria-hidden="true">↗</span></a>
+              </div>
+            </article>
+
+            <article class="menu-card reveal" data-category="vegetarian">
+              <div class="menu-card__image"><img src="https://images.unsplash.com/photo-1571997478779-2adcbbe9ab2f?auto=format&fit=crop&w=800&q=85" alt="Jardín de la Casa" loading="lazy" /><span class="card-tag">Vegetal</span></div>
+              <div class="menu-card__body">
+                <div class="menu-card__heading"><h3>Jardín de la Casa</h3><span class="price">$ 16.800</span></div>
+                <p>Pimientos, zucchini, cebolla, champiñones, mozzarella y hierbas frescas.</p>
+                <ul class="ingredients"><li>Zucchini</li><li>Pimientos</li><li>Hongos</li></ul>
+                <a class="order-link" href="https://wa.me/5491128493108" target="_blank" rel="noopener" data-order="Jardín de la Casa">Pedir esta pizza <span class="button-arrow" aria-hidden="true">↗</span></a>
+              </div>
+            </article>
+
+            <article class="menu-card reveal" data-category="special">
+              <div class="menu-card__image"><img src="https://images.unsplash.com/photo-1590947132387-155cc02f3212?auto=format&fit=crop&w=800&q=85" alt="Calabresa Picante" loading="lazy" /><span class="card-tag">Picante</span></div>
+              <div class="menu-card__body">
+                <div class="menu-card__heading"><h3>Calabresa Picante</h3><span class="price">$ 18.400</span></div>
+                <p>Salameutto, mozzarella, pimentón, ajo y un toque de chile para los más valientes.</p>
+                <ul class="ingredients"><li>Salameutto</li><li>Ajo</li><li>Chile</li></ul>
+                <a class="order-link" href="https://wa.me/5491128493108" target="_blank" rel="noopener" data-order="Calabresa Picante">Pedir esta pizza <span class="button-arrow" aria-hidden="true">↗</span></a>
+              </div>
+            </article>
+
+            <article class="menu-card reveal" data-category="vegetarian">
+              <div class="menu-card__image"><img src="https://images.unsplash.com/photo-1593560708920-61dd98c46a4e?auto=format&fit=crop&w=800&q=85" alt="Cuatro Quesos" loading="lazy" /><span class="card-tag">Vegetal</span></div>
+              <div class="menu-card__body">
+                <div class="menu-card__heading"><h3>Cuatro Quesos</h3><span class="price">$ 17.500</span></div>
+                <p>Mozzarella, parmesano, azul, gouda y crema para una mezcla de sabores.</p>
+                <ul class="ingredients"><li>Parmesano</li><li>Azul</li><li>Gouda</li></ul>
+                <a class="order-link" href="https://wa.me/5491128493108" target="_blank" rel="noopener" data-order="Cuatro Quesos">Pedir esta pizza <span class="button-arrow" aria-hidden="true">↗</span></a>
+              </div>
+            </article>
+
+            <article class="menu-card reveal" data-category="classic">
+              <div class="menu-card__image"><img src="https://images.unsplash.com/photo-1579751626657-72bc17010498?auto=format&fit=crop&w=800&q=85" alt="Tricot Funghi" loading="lazy" /><span class="card-tag">Clásica</span></div>
+              <div class="menu-card__body">
+                <div class="menu-card__heading"><h3>Tricot Funghi</h3><span class="price">$ 17.000</span></div>
+                <p>Champiñones, mozzarella, queso crema, ajo y perejil recién picado.</p>
+                <ul class="ingredients"><li>Champiñones</li><li>Queso crema</li><li>Ajo</li></ul>
+                <a class="order-link" href="https://wa.me/5491128493108" target="_blank" rel="noopener" data-order="Tricot Funghi">Pedir esta pizza <span class="button-arrow" aria-hidden="true">↗</span></a>
+              </div>
+            </article>
+          </div>
+
+          <p class="menu-note">Los precios y las combinaciones son de muestra · reemplazalos por tu menú real cuando quieras.</p>
+        </div>
+      </section>
+
+      <section class="section section--tight section--paper">
+        <div class="container">
+          <div class="section-heading reveal">
+            <div>
+              <p class="section-kicker">¿Necesitás una recomendación?</p>
+              <h2>Contanos qué<br /><em>tenés ganas.</em></h2>
+            </div>
+            <div>
+              <p class="lead">Si no sabés por dónde empezar, escribinos. Te ayudamos según el número de comensales, tus preferencias y la ocasión.</p>
+              <a class="button button--dark" href="https://wa.me/5491128493108" target="_blank" rel="noopener" data-whatsapp="Hola Nocturna Pizza, quiero una recomendación para pedir." style="margin-top: 20px;">Pedir una recomendación <span class="button-arrow" aria-hidden="true">↗</span></a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-grid">
+        <div class="footer-brand-column">
+          <a class="brand" href="index.html" aria-label="Nocturna Pizza, inicio">
+            <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4.5 13.5c0-4.36 3.36-7.9 7.5-7.9s7.5 3.54 7.5 7.9H4.5Z" fill="currentColor" /><path d="M6.8 13.5c.16 4.3 2.1 6.7 5.2 6.7s5.04-2.4 5.2-6.7H6.8Z" fill="#171514" /><circle cx="9" cy="10.8" r="1" fill="#171514" /><circle cx="14.5" cy="10.3" r="1" fill="#171514" /></svg></span>
+            <span class="brand-copy">NOCTURNA<small>PIZZA</small></span>
+          </a>
+          <p class="footer-brand-copy">Masa lenta, fuego alto y buenas conversaciones. Una pizzería de barrio con alma nocturna.</p>
+        </div>
+        <div class="footer-column"><h3>Explorá</h3><a href="index.html">Inicio</a><a href="menu.html">Menú</a><a href="contacto.html">Contacto</a></div>
+        <div class="footer-column"><h3>Escribinos</h3><a href="https://wa.me/5491128493108" target="_blank" rel="noopener" data-whatsapp="Hola Nocturna Pizza, quiero hacer un pedido.">WhatsApp · 11 2849-3108</a><p>Retiro y entrega<br />Zona a confirmar</p></div>
+      </div>
+      <div class="container footer-bottom"><span>© <span data-year></span> Nocturna Pizza</span><span>Masa lenta · Fuego alto · Noche italiana</span></div>
+    </footer>
+
+    <a class="whatsapp-float" href="https://wa.me/5491128493108" target="_blank" rel="noopener" data-whatsapp="Hola Nocturna Pizza, quiero hacer un pedido." aria-label="Pedir por WhatsApp">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.5 3.49A11.82 11.82 0 0 0 12.1 0C5.55 0 .2 5.35.2 11.9c0 2.1.55 4.15 1.6 5.96L.1 24l6.28-1.65a11.9 11.9 0 0 0 5.69 1.45h.01c6.55 0 11.9-5.35 11.9-11.9 0-3.18-1.24-6.17-3.48-8.41Zm-8.4 18.1c-1.47 0-2.91-.4-4.18-1.13l-.3-.18-3.12.82.83-3.04-.2-.31a9.84 9.84 0 0 1-1.51-5.25c0-5.45 4.44-9.89 9.9-9.89 2.64 0 5.13 1.03 7.05 2.9a9.9 9.9 0 0 1 2.92 7c0 5.46-4.45 9.89-9.9 9.89Zm5.8-7.4c-.32-.16-1.87-.92-2.16-1.03-.29-.1-.5-.15-.71.16-.21.32-.82 1.03-1 1.24-.18.21-.37.24-.68.08-.31-.16-1.31-.48-2.5-1.53-.92-.82-1.55-1.84-1.73-2.15-.18-.31-.02-.48.14-.63.14-.14.31-.37.46-.55.15-.18.2-.31.3-.52.1-.21.05-.39-.02-.55-.08-.16-.71-1.72-.97-2.36-.26-.63-.52-.54-.71-.55h-.61c-.21 0-.55.08-.84.39-.29.32-1.1 1.07-1.1 2.61s1.12 3.03 1.28 3.24c.16.21 2.2 3.36 5.34 4.71 2.5 1.06 3.13.85 3.7.79.55-.05 1.78-.73 2.03-1.43.25-.7.25-1.29.18-1.42-.08-.13-.29-.21-.61-.37Z" /></svg>
+      <span>Pedir por WhatsApp</span>
+    </a>
+
+    <script src="script.js" defer></script>
+  </body>
+</html>
