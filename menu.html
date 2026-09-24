@@ -6,9 +6,17 @@
     <meta name="description" content="Explorá el menú de Nocturna Pizza: clásicas, especiales y vegetales, con pedido directo por WhatsApp." />
     <meta name="theme-color" content="#171514" />
     <title>Menú — Nocturna Pizza</title>
+    <meta property="og:title" content="Menú — Nocturna Pizza" />
+    <meta property="og:description" content="Explorá las pizzas de Nocturna Pizza y pedí la que más te guste por WhatsApp." />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="es_AR" />
+    <meta property="og:image" content="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&amp;fit=crop&amp;w=1200&amp;q=88" />
+    <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://images.unsplash.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&amp;family=DM+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body data-page="menu">
@@ -58,12 +66,12 @@
         <div class="container">
           <div class="menu-toolbar">
             <div class="filter-list" role="group" aria-label="Filtrar menú">
-              <button class="filter-button is-active" type="button" data-filter="all">Todas</button>
-              <button class="filter-button" type="button" data-filter="classic">Clásicas</button>
-              <button class="filter-button" type="button" data-filter="special">Especiales</button>
-              <button class="filter-button" type="button" data-filter="vegetarian">Vegetales</button>
+              <button class="filter-button is-active" type="button" data-filter="all" aria-pressed="true">Todas</button>
+              <button class="filter-button" type="button" data-filter="classic" aria-pressed="false">Clásicas</button>
+              <button class="filter-button" type="button" data-filter="special" aria-pressed="false">Especiales</button>
+              <button class="filter-button" type="button" data-filter="vegetarian" aria-pressed="false">Vegetales</button>
             </div>
-            <span class="menu-count" data-menu-count>8 pizzas</span>
+            <span class="menu-count" data-menu-count role="status" aria-live="polite" aria-atomic="true">8 pizzas</span>
           </div>
 
           <div class="menu-grid">

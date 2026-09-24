@@ -6,9 +6,17 @@
     <meta name="description" content="Contactá a Nocturna Pizza por WhatsApp para hacer tu pedido, consultar horarios o consultar por entrega y retiro." />
     <meta name="theme-color" content="#171514" />
     <title>Contacto — Nocturna Pizza</title>
+    <meta property="og:title" content="Contacto — Nocturna Pizza" />
+    <meta property="og:description" content="Encontrá Nocturna Pizza, consultá horarios y hacé tu pedido por WhatsApp." />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="es_AR" />
+    <meta property="og:image" content="https://images.unsplash.com/photo-1593560708920-61dd98c46a4e?auto=format&amp;fit=crop&amp;w=1200&amp;q=88" />
+    <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://images.unsplash.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&amp;family=DM+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body data-page="contact">
@@ -75,8 +83,8 @@
               </div>
               <div class="location-card" style="margin-top: 20px;">
                 <h3 class="mini-heading">Dónde nos encontrás</h3>
-                <p>Estamos preparando la dirección y la zona de reparto. Por ahora, escribinos por WhatsApp para coordinar tu pedido o retiro.</p>
-                <span class="location-card__pin"><span aria-hidden="true">⌖</span> Dirección por confirmar</span>
+                <p>Usá el mapa para orientarte. Confirmanos por WhatsApp la dirección exacta, el punto de retiro y las zonas de entrega.</p>
+                <span class="location-card__pin"><span aria-hidden="true">⌖</span> Ubicación compartida en el mapa</span>
               </div>
             </div>
 
@@ -99,6 +107,19 @@
               </div>
             </div>
           </div>
+
+          <section class="location-map reveal" aria-labelledby="location-title">
+            <div class="location-map__content">
+              <p class="section-kicker">Nuestra ubicación</p>
+              <h2 id="location-title">Te esperamos<br /><em>en el mapa.</em></h2>
+              <p class="location-map__address">Av. El Salvador 4202<br />Palermo, Buenos Aires</p>
+              <p>Usá el mapa para encontrarnos y tocá el botón para abrir la navegación hasta el local.</p>
+              <a class="button button--dark" href="https://www.google.com/maps/search/?api=1&amp;query=34.592774%2C-58.46094482568362" target="_blank" rel="noopener">Cómo llegar <span class="button-arrow" aria-hidden="true">↗</span></a>
+            </div>
+            <div class="location-map__frame">
+              <iframe title="Ubicación de Nocturna Pizza" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d26275.60214523511!2d-58.46094482568362!3d-34.592774!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x95bccb005b681887%3A0xe304762d24395ed6!2sDon%20Hernaccio's%20-%20Italian%20Panini%20-%20Foccacia%20%2F%20Schiacciata!5e0!3m2!1ses-419!2sar!4v1790271874743!5m2!1ses-419!2sar" width="600" height="450" allowfullscreen="" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+            </div>
+          </section>
 
           <div class="form-card reveal">
             <div class="form-card__intro">
@@ -125,7 +146,7 @@
                 </div>
                 <div class="form-field">
                   <label for="contact">Teléfono o alias</label>
-                  <input id="contact" name="contact" type="text" placeholder="Opcional" />
+                  <input id="contact" name="contact" type="tel" autocomplete="tel" placeholder="Opcional" />
                 </div>
                 <div class="form-field form-field--full">
                   <label for="notes">Mensaje adicional</label>
@@ -138,6 +159,9 @@
               </div>
               <p class="form-status" data-form-status role="status" aria-live="polite"></p>
             </form>
+            <noscript>
+              <p class="form-note">Si JavaScript está desactivado, <a class="text-link" href="https://wa.me/5491128493108" target="_blank" rel="noopener">escribinos directamente por WhatsApp <span aria-hidden="true">↗</span></a>.</p>
+            </noscript>
           </div>
         </div>
       </section>
@@ -164,7 +188,7 @@
               <p>La primera versión muestra precios de ejemplo. Cuando carguemos el menú real, actualizaremos el catálogo y sus datos.</p>
             </details>
             <details class="faq-item">
-              <summary>¿Tenenés opciones vegetales?</summary>
+              <summary>¿Tenés opciones vegetales?</summary>
               <p>Sí. La carta de ejemplo incluye opciones vegetales. Consultanos por ingredientes y disponibilidad para pizza o acompañamientos.</p>
             </details>
           </div>
