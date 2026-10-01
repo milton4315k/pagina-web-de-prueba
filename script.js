@@ -93,81 +93,8 @@ function setupHeaderScroll() {
   window.addEventListener('scroll', updateHeader, { passive: true });
 }
 
-function setupMenuFilters() {
-  const filterButtons = document.querySelectorAll('[data-filter]');
-  const menuCards = document.querySelectorAll('[data-category]');
-  const count = document.querySelector('[data-menu-count]');
-
-  if (!filterButtons.length || !menuCards.length) return;
-
-  filterButtons.forEach((button) => {
-    button.setAttribute('aria-pressed', String(button.classList.contains('is-active')));
-
-    button.addEventListener('click', () => {
-      const filter = button.dataset.filter;
-      let visibleCards = 0;
-
-      filterButtons.forEach((item) => {
-        item.classList.remove('is-active');
-        item.setAttribute('aria-pressed', 'false');
-      });
-      button.classList.add('is-active');
-      button.setAttribute('aria-pressed', 'true');
-
-      menuCards.forEach((card) => {
-        const matches = filter === 'all' || card.dataset.category === filter;
-        card.classList.toggle('is-hidden', !matches);
-        if (matches) visibleCards += 1;
-      });
-
-      if (count) count.textContent = `${visibleCards} ${visibleCards === 1 ? 'pizza' : 'pizzas'}`;
-    });
-  });
-}
-
-function setupContactForm() {
-  const form = document.querySelector('[data-contact-form]');
-  if (!form) return;
-
-  const status = form.querySelector('[data-form-status]');
-
-  form.addEventListener('submit', (event) => {
-    event.preventDefault();
-
-    const formData = new FormData(form);
-    const name = formData.get('name')?.toString().trim() || 'Un cliente';
-    const order = formData.get('order')?.toString().trim() || 'un pedido';
-    const methodValue = formData.get('method')?.toString().trim();
-    const methodLabels = {
-      retiro: 'Retiro en el local',
-      entrega: 'Entrega a domicilio',
-      consulta: 'Consulta',
-    };
-    const method = methodLabels[methodValue] || methodValue || 'una consulta';
-    const contact = formData.get('contact')?.toString().trim();
-    const notes = formData.get('notes')?.toString().trim();
-
-    const message = [
-      `Hola Nocturna Pizza, soy ${name}.`,
-      `Quiero hacer un pedido: ${order}.`,
-      `Modalidad: ${method}.`,
-      contact ? `Contacto: ${contact}.` : '',
-      notes ? `Detalle: ${notes}` : '',
-      '¿Me confirmás disponibilidad y forma de pago?',
-    ]
-      .filter(Boolean)
-      .join('\n');
-
-    if (status) status.textContent = 'Te estamos llevando a WhatsApp…';
-    const url = whatsappUrl(message);
-    const openedWindow = window.open(url, '_blank', 'noopener,noreferrer');
-
-    if (!openedWindow) {
-      if (status) status.textContent = 'No se pudo abrir la ventana. Te llevamos a WhatsApp…';
-      window.location.href = url;
-    }
-  });
-}
+// Los filtros de menú y el formulario de contacto viven en módulos ES
+// (js/menu.js y js/contacto.js) porque necesitan la API.
 
 document.addEventListener('DOMContentLoaded', () => {
   setWhatsAppLinks();
@@ -176,6 +103,4 @@ document.addEventListener('DOMContentLoaded', () => {
   setCurrentYear();
   setupRevealAnimations();
   setupHeaderScroll();
-  setupMenuFilters();
-  setupContactForm();
 });

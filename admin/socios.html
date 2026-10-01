@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#171514" />
+    <title>Socios — Panel Nocturna Pizza</title>
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="admin.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <header class="topbar">
+        <p class="topbar__brand">NOCTURNA<small>PIZZA</small></p>
+        <nav class="topbar__nav" aria-label="Panel">
+          <a href="index.html">Pedidos</a>
+          <a href="mensajes.html">
+            Mensajes <span class="badge" data-unread-badge hidden>0</span>
+          </a>
+          <a href="socios.html" aria-current="page">Socios</a>
+          <button class="btn btn--ghost btn--small" type="button" data-logout>Salir</button>
+        </nav>
+      </header>
+
+      <h1>Socios del Pase Nocturno</h1>
+      <p class="cell-muted" style="margin-top: 0.35rem">
+        Los puntos se acreditan solos cuando marcás un pedido como entregado. Acá ajustás
+        a mano y confirmás los canjes.
+      </p>
+
+      <section class="stats" data-stats style="margin-top: 1.5rem"></section>
+
+      <form class="toolbar" data-filters>
+        <div class="field">
+          <label for="filter-search">Buscar</label>
+          <input id="filter-search" name="search" type="search" placeholder="Nombre, teléfono o código" />
+        </div>
+        <div class="field">
+          <label for="filter-min">Puntos mínimos</label>
+          <select id="filter-min" name="minPoints">
+            <option value="">Todos</option>
+            <option value="50">50+ (bebida)</option>
+            <option value="100">100+ (pizza gratis)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="filter-sort">Ordenar por</label>
+          <select id="filter-sort" name="sort">
+            <option value="points">Más puntos</option>
+            <option value="newest">Más recientes</option>
+            <option value="birthday">Próximo cumpleaños</option>
+          </select>
+        </div>
+        <button class="btn" type="submit">Filtrar</button>
+      </form>
+
+      <p class="error" data-error hidden></p>
+
+      <section class="panel" data-birthdays-panel hidden style="margin-bottom: 1.5rem">
+        <h2 style="margin-bottom: 0.75rem">Próximos cumpleaños</h2>
+        <div data-birthdays></div>
+      </section>
+
+      <section class="panel">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Socio</th>
+                <th scope="col">Código</th>
+                <th scope="col">WhatsApp</th>
+                <th scope="col">Cumple</th>
+                <th scope="col" class="cell-num">Puntos</th>
+                <th scope="col" class="cell-num">Pedidos</th>
+                <th scope="col">Acciones</th>
+              </tr>
+            </thead>
+            <tbody data-rows></tbody>
+          </table>
+        </div>
+        <p class="empty" data-empty hidden>No hay socios con esos filtros.</p>
+      </section>
+    </div>
+
+    <script type="module" src="../js/admin/socios.js"></script>
+  </body>
+</html>

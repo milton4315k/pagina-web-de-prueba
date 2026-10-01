@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#171514" />
+    <title>Pedidos — Panel Nocturna Pizza</title>
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="admin.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <header class="topbar">
+        <p class="topbar__brand">NOCTURNA<small>PIZZA</small></p>
+        <nav class="topbar__nav" aria-label="Panel">
+          <a href="index.html" aria-current="page">Pedidos</a>
+          <a href="mensajes.html">
+            Mensajes <span class="badge" data-unread-badge hidden>0</span>
+          </a>
+          <a href="socios.html">Socios</a>
+          <button class="btn btn--ghost btn--small" type="button" data-logout>Salir</button>
+        </nav>
+      </header>
+
+      <h1>Pedidos</h1>
+      <p class="cell-muted" style="margin-top: 0.35rem">
+        Cada pedido llega por WhatsApp con un código&nbsp;<code>NP-XXXXX</code>. Usalo para
+        ubicarlo en el chat.
+      </p>
+
+      <section class="stats" data-stats style="margin-top: 1.5rem"></section>
+
+      <form class="toolbar" data-filters>
+        <div class="field">
+          <label for="filter-status">Estado</label>
+          <select id="filter-status" name="status">
+            <option value="">Todos</option>
+            <option value="new">Sin confirmar</option>
+            <option value="confirmed">Confirmado</option>
+            <option value="preparing">En preparación</option>
+            <option value="out_for_delivery">En camino</option>
+            <option value="delivered">Entregado</option>
+            <option value="cancelled">Cancelado</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="filter-from">Desde</label>
+          <input id="filter-from" name="from" type="date" />
+        </div>
+        <div class="field">
+          <label for="filter-to">Hasta</label>
+          <input id="filter-to" name="to" type="date" />
+        </div>
+        <button class="btn" type="submit">Filtrar</button>
+      </form>
+
+      <p class="error" data-error hidden></p>
+
+      <section class="panel">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Código</th>
+                <th scope="col">Cliente</th>
+                <th scope="col">Hora</th>
+                <th scope="col">Modalidad</th>
+                <th scope="col">Estado</th>
+                <th scope="col" class="cell-num">Total</th>
+                <th scope="col">Siguiente</th>
+              </tr>
+            </thead>
+            <tbody data-rows></tbody>
+          </table>
+        </div>
+        <p class="empty" data-empty hidden>No hay pedidos con esos filtros.</p>
+      </section>
+    </div>
+
+    <script type="module" src="../js/admin/pedidos.js"></script>
+  </body>
+</html>

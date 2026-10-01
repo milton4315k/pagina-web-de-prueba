@@ -442,6 +442,18 @@ select:focus-visible {
   gap: 32px;
 }
 
+/* Los CTAs viven fuera de .nav-links para que el pase siga visible en
+   celular, donde .nav-links es el desplegable del hamburguesa.
+   .navbar es space-between: la marca queda a la izquierda y el resto a la
+   derecha. El margin-left junta nav-links con los CTAs en vez de repartir
+   el espacio libre entre los tres. */
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
 .nav-links > a:not(.nav-cta) {
   position: relative;
   padding: 30px 0;
@@ -501,6 +513,48 @@ select:focus-visible {
 
 .nav-cta .button-arrow {
   font-size: 0.95rem;
+}
+
+.nav-cta--pase {
+  white-space: nowrap;
+}
+
+/* El botón del pase arranca con el texto largo y JS lo acorta a "Mi Pase". */
+.nav-cta--pase .pase-trigger__pts {
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--copper);
+  color: var(--ink);
+  font-size: 0.62rem;
+  letter-spacing: 0;
+}
+
+.nav-cta--pase:hover .pase-trigger__pts {
+  background: var(--ink);
+  color: var(--copper-bright);
+}
+
+/* El <button> del pase no es un <a>: sin esto hereda estilos de botón. */
+button.nav-cta {
+  font-family: inherit;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+button.nav-cta:focus-visible {
+  outline: 2px solid var(--copper-bright);
+  outline-offset: 3px;
+}
+
+.noscript-note {
+  margin: 0 0 1.5rem;
+  padding: 0.9rem 1.1rem;
+  border: 1px solid var(--copper);
+  border-radius: 10px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.6;
 }
 
 .menu-toggle {
@@ -1630,6 +1684,20 @@ select:focus-visible {
   font-size: 1.1rem;
 }
 
+.menu-status:empty {
+  display: none;
+}
+
+.menu-status {
+  margin: 0 0 22px;
+  padding: 11px 15px;
+  border: 1px solid var(--copper);
+  border-radius: 10px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+
 .menu-note {
   display: flex;
   align-items: center;
@@ -2272,9 +2340,12 @@ select:focus-visible {
     min-height: 72px;
   }
 
+  /* .nav-links pasa a ser absoluto, así que el hamburguesa tiene que pegarse
+     a los CTAs. Sin este margin, space-between los separa y quedan desalineados. */
   .menu-toggle {
     display: grid;
     place-items: center;
+    margin-left: auto;
   }
 
   .nav-links {
@@ -2310,9 +2381,25 @@ select:focus-visible {
     bottom: -1px;
   }
 
-  .nav-cta {
+  /* Los CTAs ya no están dentro del desplegable, así que no llevan margin-top
+     ni occupy una columna: se alinean a la derecha del navbar. */
+  .nav-actions {
+    gap: 8px;
+  }
+
+  .nav-actions .nav-cta {
     justify-content: center;
-    margin-top: 16px;
+    margin-top: 0;
+    min-height: 40px;
+    padding: 0 12px;
+    font-size: 0.6rem;
+  }
+
+  /* El texto largo no entra: en celular queda solo el ícono + "Mi Pase".
+     El JS reemplaza el contenido cuando hay puntos. */
+  .nav-cta--pase {
+    max-width: 46vw;
+    overflow: hidden;
   }
 
   .hero {
@@ -2465,6 +2552,33 @@ select:focus-visible {
 @media (max-width: 560px) {
   .container {
     width: min(var(--container), calc(100% - 28px));
+  }
+
+  /* En celular chico los dos CTAs no entran con el texto completo.
+     El pase queda como ícono + "Mi Pase" y el de WhatsApp solo el ícono. */
+  .nav-actions {
+    gap: 6px;
+  }
+
+  .nav-actions .nav-cta {
+    padding: 0 10px;
+    font-size: 0.56rem;
+    letter-spacing: 0.07em;
+  }
+
+  .nav-actions .nav-cta--pase {
+    max-width: none;
+  }
+
+  .nav-actions .nav-cta:last-child {
+    font-size: 0;
+    gap: 0;
+    padding: 0;
+    width: 42px;
+  }
+
+  .nav-actions .nav-cta:last-child .button-arrow {
+    font-size: 0.95rem;
   }
 
   .topline {

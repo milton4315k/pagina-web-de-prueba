@@ -1,0 +1,31 @@
+# Netlify publica la raíz del repo. La API vive en Render y se proxya por
+# /api/* para que el frontend use rutas relativas (sin CORS ni URL hardcodeada).
+
+[build]
+  publish = "."
+  command = "echo 'Sitio estático: no hace falta build'"
+
+[[redirects]]
+  from = "/api/*"
+  to = "https://nocturna-api.onrender.com/api/:splat"
+  status = 200
+  force = true
+
+# El panel no debería indexarse nunca.
+[[headers]]
+  for = "/admin/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Frame-Options = "SAMEORIGIN"
+
+# El proxy no debe quedar cacheado: los pedidos son datos frescos.
+[[headers]]
+  for = "/api/*"
+  [headers.values]
+    Cache-Control = "no-store"

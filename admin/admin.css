@@ -1,0 +1,588 @@
+/* Panel de Nocturna Pizza.
+   Estilos propios del panel; el sitio público usa styles.css. */
+
+:root {
+  --bg: #171514;
+  --bg-soft: #201d1b;
+  --surface: #262220;
+  --surface-2: #2f2a27;
+  --line: #3a3431;
+  --copper: #c9814a;
+  --copper-bright: #e8a76b;
+  --cream: #f4ece2;
+  --muted: #a79b92;
+  --ok: #6fbf8b;
+  --warn: #e0b451;
+  --danger: #e07a6b;
+  --radius: 12px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--cream);
+  font-family: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--copper-bright);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+h1 {
+  font-size: 1.85rem;
+}
+
+h2 {
+  font-size: 1.35rem;
+}
+
+/* Layout ---------------------------------------------------------------- */
+
+.shell {
+  width: min(1080px, 100% - 2.5rem);
+  margin: 0 auto;
+  padding: 2rem 0 4rem;
+}
+
+.topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 1.75rem;
+}
+
+.topbar__brand {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  color: var(--cream);
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 1.3rem;
+  letter-spacing: 0.08em;
+}
+
+.topbar__brand small {
+  color: var(--copper);
+  font-size: 0.72rem;
+  letter-spacing: 0.2em;
+}
+
+.topbar__nav {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.topbar__nav a {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.topbar__nav a:hover,
+.topbar__nav a[aria-current='page'] {
+  color: var(--copper-bright);
+  text-decoration: none;
+}
+
+.badge {
+  display: inline-block;
+  min-width: 1.4em;
+  padding: 0.1em 0.45em;
+  border-radius: 999px;
+  background: var(--copper);
+  color: var(--bg);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* Controles -------------------------------------------------------------- */
+
+.panel {
+  padding: 1.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+  margin-bottom: 1.5rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.field label {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+select,
+input,
+textarea {
+  min-height: 40px;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--bg-soft);
+  color: var(--cream);
+  font: inherit;
+  font-size: 0.88rem;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--copper);
+  outline-offset: 2px;
+}
+
+.btn {
+  min-height: 40px;
+  padding: 0 1.1rem;
+  border: 1px solid var(--copper);
+  border-radius: 999px;
+  background: var(--copper);
+  color: var(--bg);
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease, opacity 160ms ease;
+}
+
+.btn:hover {
+  background: var(--copper-bright);
+  border-color: var(--copper-bright);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--copper-bright);
+}
+
+.btn--ghost:hover {
+  background: var(--surface-2);
+}
+
+.btn--small {
+  min-height: 32px;
+  padding: 0 0.75rem;
+  font-size: 0.66rem;
+}
+
+/* Resúmenes -------------------------------------------------------------- */
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat {
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.stat__value {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.stat__label {
+  margin-top: 0.3rem;
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* Tablas ----------------------------------------------------------------- */
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+th {
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+td {
+  padding: 0.85rem 0.75rem;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+
+tbody tr:hover {
+  background: var(--surface-2);
+}
+
+.cell-strong {
+  font-weight: 600;
+}
+
+.cell-muted {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.cell-num {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Estados ---------------------------------------------------------------- */
+
+.status {
+  display: inline-block;
+  padding: 0.25em 0.6em;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.status--new {
+  color: var(--copper-bright);
+}
+
+.status--confirmed {
+  color: var(--warn);
+}
+
+.status--preparing {
+  color: var(--copper);
+}
+
+.status--out_for_delivery {
+  color: var(--ok);
+}
+
+.status--delivered {
+  color: var(--muted);
+}
+
+.status--cancelled {
+  color: var(--danger);
+}
+
+.pill-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+/* Detalle ---------------------------------------------------------------- */
+
+.detail {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+
+.detail__items {
+  margin: 0.5rem 0 0;
+  padding-left: 1.1rem;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.detail__note {
+  margin-top: 0.75rem;
+  padding: 0.7rem 0.9rem;
+  border-left: 2px solid var(--copper);
+  background: var(--bg-soft);
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.message-body {
+  max-width: 52ch;
+  color: var(--cream);
+  font-size: 0.88rem;
+}
+
+.unread {
+  font-weight: 600;
+}
+
+.unread::before {
+  content: '';
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 0.5rem;
+  border-radius: 50%;
+  background: var(--copper);
+  vertical-align: middle;
+}
+
+/* Marca del pase en el listado de pedidos, para ubicar al socio de un vistazo. */
+.pase-mark {
+  color: var(--copper-bright);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+/* Estados vacíos y errores ------------------------------------------------ */
+
+.empty {
+  padding: 2.5rem 1rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+.error {
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.25rem;
+  border: 1px solid var(--danger);
+  border-radius: 10px;
+  color: var(--danger);
+  font-size: 0.85rem;
+}
+
+.notice {
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.25rem;
+  border: 1px solid var(--copper);
+  border-radius: 10px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.55;
+}
+
+/* Login ------------------------------------------------------------------ */
+
+.login {
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding: 2rem 1.25rem;
+}
+
+.login__card {
+  width: min(430px, 100%);
+  padding: 2rem;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  text-align: center;
+}
+
+.login__card h1 {
+  margin-bottom: 0.6rem;
+}
+
+.login__steps {
+  margin: 1.5rem 0 1.75rem;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+  text-align: left;
+}
+
+.login__steps li {
+  position: relative;
+  padding-left: 2rem;
+  margin-bottom: 0.7rem;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.5;
+  counter-increment: step;
+}
+
+.login__steps li::before {
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: 0.05rem;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--copper);
+  border-radius: 50%;
+  color: var(--copper-bright);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.login__full {
+  display: block;
+  width: 100%;
+}
+
+.login__back {
+  margin-top: 1.25rem;
+  font-size: 0.78rem;
+}
+
+@media (max-width: 640px) {
+  .shell {
+    padding-top: 1.25rem;
+  }
+
+  .topbar {
+    align-items: flex-start;
+  }
+
+  .topbar__nav {
+    gap: 1rem;
+  }
+
+  .panel {
+    padding: 1.1rem;
+  }
+
+  /* Las tablas del panel tienen 6-7 columnas: a 360px son ilegibles.
+     Cada fila pasa a ser una tarjeta apilada con sus labels visibles. */
+  .table-wrap table,
+  .table-wrap thead,
+  .table-wrap tbody,
+  .table-wrap tr,
+  .table-wrap th,
+  .table-wrap td {
+    display: block;
+  }
+
+  .table-wrap thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .table-wrap tr {
+    margin-bottom: 0.85rem;
+    padding: 0.75rem 0.85rem;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--surface-2);
+  }
+
+  .table-wrap td {
+    display: flex;
+    gap: 0.75rem;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 0.3rem 0;
+    border-bottom: 0;
+    text-align: right;
+  }
+
+  .table-wrap td::before {
+    content: attr(data-label);
+    flex: none;
+    color: var(--muted);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-align: left;
+    text-transform: uppercase;
+  }
+
+  /* La celda de acciones se_centra y ocupa el ancho completo. */
+  .table-wrap td:last-child {
+    justify-content: center;
+    margin-top: 0.4rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .table-wrap td:last-child::before {
+    content: none;
+  }
+
+  /* La fila de detalle no lleva label: es un bloque libre. */
+  .table-wrap .detail td {
+    display: block;
+    text-align: left;
+  }
+
+  .table-wrap td:empty {
+    display: none;
+  }
+
+  /* El texto de los mensajes puede ocupar el ancho completo. */
+  .message-body {
+    max-width: none;
+    text-align: left;
+  }
+
+
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

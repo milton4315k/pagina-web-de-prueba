@@ -49,6 +49,11 @@
           <a href="index.html" data-nav="home">Inicio</a>
           <a href="menu.html" data-nav="menu">Menú</a>
           <a href="contacto.html" data-nav="contact">Contacto</a>
+        </div>
+        <div class="nav-actions">
+          <button class="nav-cta nav-cta--pase" type="button" data-pase-trigger aria-haspopup="dialog">
+            <span aria-hidden="true">🔑</span> Mi Pase Nocturno
+          </button>
           <a class="nav-cta" href="https://wa.me/5491128493108" target="_blank" rel="noopener" data-whatsapp="Hola Nocturna Pizza, quiero hacer un pedido.">
             Pedir por WhatsApp <span class="button-arrow" aria-hidden="true">↗</span>
           </a>
@@ -128,8 +133,9 @@
             </div>
           </div>
 
-          <div class="pizza-grid">
-            <article class="pizza-card reveal">
+          <!-- Las destacadas vienen de la API (is_featured). Este HTML es el fallback. -->
+          <div class="pizza-grid" data-featured-grid hidden>
+            <article class="pizza-card">
               <div class="pizza-card__image">
                 <img src="https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=800&q=85" alt="Pizza Margherita de Nocturna Pizza" loading="lazy" />
                 <span class="card-tag">La esencial</span>
@@ -144,7 +150,7 @@
               </div>
             </article>
 
-            <article class="pizza-card reveal">
+            <article class="pizza-card">
               <div class="pizza-card__image">
                 <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=800&q=85" alt="Pizza pepperoni dorada y recién horneada" loading="lazy" />
                 <span class="card-tag">Más elegida</span>
@@ -159,7 +165,7 @@
               </div>
             </article>
 
-            <article class="pizza-card reveal">
+            <article class="pizza-card">
               <div class="pizza-card__image">
                 <img src="https://images.unsplash.com/photo-1594007654729-407eedc4be65?auto=format&fit=crop&w=800&q=85" alt="Pizza con jamón y vegetales" loading="lazy" />
                 <span class="card-tag">Edición limitada</span>
@@ -327,11 +333,23 @@
       <div class="container footer-bottom"><span>© <span data-year></span> Nocturna Pizza</span><span>Masa lenta · Fuego alto · Noche italiana</span></div>
     </footer>
 
+    <noscript>
+      <div class="container">
+        <p class="noscript-note">
+          Sin JavaScript no podés crear tu Pase Nocturno desde la web, pero escribinos
+          por WhatsApp y te lo armamos a mano:
+          <a class="text-link" href="https://wa.me/5491128493108?text=Hola%20Nocturna%20Pizza%2C%20quiero%20crear%20mi%20Pase%20Nocturno" target="_blank" rel="noopener">pedir mi pase <span aria-hidden="true">↗</span></a>
+        </p>
+      </div>
+    </noscript>
+
     <a class="whatsapp-float" href="https://wa.me/5491128493108" target="_blank" rel="noopener" data-whatsapp="Hola Nocturna Pizza, quiero hacer un pedido." aria-label="Pedir por WhatsApp">
       <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.5 3.49A11.82 11.82 0 0 0 12.1 0C5.55 0 .2 5.35.2 11.9c0 2.1.55 4.15 1.6 5.96L.1 24l6.28-1.65a11.9 11.9 0 0 0 5.69 1.45h.01c6.55 0 11.9-5.35 11.9-11.9 0-3.18-1.24-6.17-3.48-8.41Zm-8.4 18.1c-1.47 0-2.91-.4-4.18-1.13l-.3-.18-3.12.82.83-3.04-.2-.31a9.84 9.84 0 0 1-1.51-5.25c0-5.45 4.44-9.89 9.9-9.89 2.64 0 5.13 1.03 7.05 2.9a9.9 9.9 0 0 1 2.92 7c0 5.46-4.45 9.89-9.9 9.89Zm5.8-7.4c-.32-.16-1.87-.92-2.16-1.03-.29-.1-.5-.15-.71.16-.21.32-.82 1.03-1 1.24-.18.21-.37.24-.68.08-.31-.16-1.31-.48-2.5-1.53-.92-.82-1.55-1.84-1.73-2.15-.18-.31-.02-.48.14-.63.14-.14.31-.37.46-.55.15-.18.2-.31.3-.52.1-.21.05-.39-.02-.55-.08-.16-.71-1.72-.97-2.36-.26-.63-.52-.54-.71-.55h-.61c-.21 0-.55.08-.84.39-.29.32-1.1 1.07-1.1 2.61s1.12 3.03 1.28 3.24c.16.21 2.2 3.36 5.34 4.71 2.5 1.06 3.13.85 3.7.79.55-.05 1.78-.73 2.03-1.43.25-.7.25-1.29.18-1.42-.08-.13-.29-.21-.61-.37Z" /></svg>
       <span>Pedir por WhatsApp</span>
     </a>
 
     <script src="script.js" defer></script>
+    <script type="module" src="js/pase-ui.js"></script>
+    <script type="module" src="js/destacadas.js"></script>
   </body>
 </html>
