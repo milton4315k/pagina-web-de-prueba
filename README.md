@@ -12,8 +12,40 @@ HTML y no montado por JavaScript: si el JS no carga, el botón sigue visible y h
 `<noscript>` con un link a WhatsApp para pedir el pase a mano. El módulo `js/pase-ui.js`
 solo le pone los puntos al botón y monta el modal.
 
+El módulo marca el botón con `data-pase-ready` recién cuando quedó montado. Si no carga
+(import roto) o no puede mostrar el `<dialog>`, `script.js` ve el clic sin esa marca y
+abre WhatsApp con el pedido del pase: el botón nunca se queda mudo. Ese clic sin marca
+era justamente el síntoma del bug de `formatBirthday` sin `export`.
+
 El frontend es estático y lo publica Netlify. La API y la base viven en Render
 y Supabase respectivamente.
+
+## Diseño y motion (rediseño 2026)
+
+Referencia: los SOTD de Awwwards de la categoría *Food & Drink* — tipografía
+cinética, scroll storytelling y micro-interacciones, sobre la identidad
+original (cobre sobre negro, Cormorant Garamond + DM Sans).
+
+La capa nueva está **al final de `styles.css`** (sección *"Rediseño 2026"*),
+así que pisa lo anterior sin tocarlo. Incluye preloader, grano de película,
+palabra fantasma del hero, marquee, reveals con cascada, barra de progreso de
+lectura y estados hover.
+
+`js/motion.js` agrega lo que necesita JS: intro del hero al cerrar el
+preloader, parallax, botones magnéticos y la cortina de transición entre
+páginas. Va **después** de GSAP por CDN (jsDelivr) y todo está guardado:
+
+- Si GSAP no carga (sin red, CDN caído), `motion.js` no hace nada y el sitio
+  se ve completo: el contenido nunca depende de la animación.
+- Si el usuario pidió menos movimiento (`prefers-reduced-motion`), la capa de
+  motion se apaga y el CSS anula marquee, grano y preloader.
+- El preloader solo existe con JS (`html.has-js`) y tiene un failsafe de
+  2,6 s: no puede dejar la página tapada.
+- `script.js` es el que revela los `.reveal` (IntersectionObserver) y pone la
+  cascada con `nocturnaStagger`; funciona sin GSAP.
+
+Para volver al diseño anterior: basta con quitar los bloques "Rediseño 2026"
+de `styles.css`, `js/motion.js` y los `<script>` de GSAP de las tres páginas.
 
 ## Ver el sitio localmente
 

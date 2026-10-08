@@ -2784,3 +2784,536 @@ button.nav-cta:focus-visible {
     display: none;
   }
 }
+
+/* ==========================================================================
+   Rediseño 2026 — capa cinematográfica.
+   Va al final del archivo a propósito: pisa lo anterior sin tocarlo.
+   Nada de esto es requisito para que el sitio funcione: si el JS no carga,
+   todo lo de abajo se ve bien igual (la animación solo mejora).
+   ========================================================================== */
+
+/* --- Progreso de lectura ------------------------------------------------- */
+
+.scroll-progress {
+  position: fixed;
+  z-index: 45;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 2px;
+  background: transparent;
+  pointer-events: none;
+}
+
+.scroll-progress span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--copper-dark), var(--copper-bright));
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+}
+
+/* --- Grano de película --------------------------------------------------- */
+
+body::after {
+  position: fixed;
+  z-index: 44;
+  inset: -150px;
+  content: "";
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grain 7s steps(6) infinite;
+}
+
+@keyframes grain {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  20% {
+    transform: translate(-40px, 20px);
+  }
+  40% {
+    transform: translate(30px, -35px);
+  }
+  60% {
+    transform: translate(-25px, -25px);
+  }
+  80% {
+    transform: translate(35px, 30px);
+  }
+}
+
+/* --- Preloader ----------------------------------------------------------- */
+
+.preloader {
+  position: fixed;
+  z-index: 120;
+  inset: 0;
+  display: none;
+  place-items: center;
+  background: var(--ink);
+  text-align: center;
+}
+
+html.has-js .preloader {
+  display: grid;
+}
+
+.preloader.is-done {
+  pointer-events: none;
+  animation: preloader-out 0.75s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+}
+
+@keyframes preloader-out {
+  to {
+    visibility: hidden;
+    transform: translateY(-100%);
+  }
+}
+
+.preloader__mark {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 9px;
+  overflow: hidden;
+  font-family: var(--serif);
+  font-size: clamp(2.2rem, 8vw, 3.6rem);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.preloader__mark span,
+.preloader__mark small {
+  display: inline-block;
+  animation: preloader-rise 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.preloader__mark small {
+  color: var(--copper-bright);
+  font-family: var(--sans);
+  font-size: 0.28em;
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  animation-delay: 0.12s;
+}
+
+@keyframes preloader-rise {
+  from {
+    opacity: 0;
+    transform: translateY(105%);
+  }
+}
+
+.preloader__line {
+  width: min(240px, 55vw);
+  height: 1px;
+  margin: 26px auto 0;
+  overflow: hidden;
+  background: var(--line-light);
+}
+
+.preloader__fill {
+  display: block;
+  height: 100%;
+  background: var(--copper-bright);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  animation: preloader-fill 1.6s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+}
+
+@keyframes preloader-fill {
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.preloader__meta {
+  margin: 15px 0 0;
+  color: var(--muted);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  animation: preloader-rise 0.9s 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* --- Hero: palabra fantasma y líneas del título -------------------------- */
+
+.hero-ghost {
+  position: absolute;
+  z-index: 0;
+  top: 50%;
+  right: -7vw;
+  margin: 0;
+  color: transparent;
+  font-family: var(--serif);
+  font-size: clamp(9rem, 26vw, 24rem);
+  font-weight: 500;
+  letter-spacing: -0.05em;
+  line-height: 0.8;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+  transform: translateY(-50%);
+  -webkit-text-stroke: 1px rgba(228, 160, 117, 0.16);
+}
+
+@supports not (-webkit-text-stroke: 1px #000) {
+  .hero-ghost {
+    color: rgba(228, 160, 117, 0.06);
+  }
+}
+
+.hero-grid {
+  position: relative;
+  z-index: 1;
+}
+
+.title-line {
+  display: block;
+  overflow: hidden;
+  /* El título va con line-height .94: sin aire, el recorte se come los
+     ascendentes. El padding da el aire y el margin negativo devuelve el
+     espacio. El h1 es grid justamente para que esos márgenes no colapsen
+     entre hermanos (si colapsan, las líneas se separan). */
+  padding-top: 0.16em;
+  margin-top: -0.16em;
+  padding-bottom: 0.14em;
+  margin-bottom: -0.14em;
+}
+
+.title-line__inner {
+  display: block;
+}
+
+/* Sin esto las líneas del título no pueden recortarse ni volver a su sitio. */
+.display-title,
+.page-hero h1 {
+  display: grid;
+}
+
+.hero-image-wrap {
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(200, 120, 79, 0.16);
+}
+
+.hero-badge {
+  animation: badge-float 6s ease-in-out infinite;
+}
+
+@keyframes badge-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-12px) rotate(-4deg);
+  }
+}
+
+/* --- Marquee ------------------------------------------------------------- */
+
+.marquee {
+  position: relative;
+  overflow: hidden;
+  padding: 26px 0;
+  border-top: 1px solid var(--line-light);
+  border-bottom: 1px solid var(--line-light);
+  background: var(--ink-soft);
+}
+
+.marquee--invert {
+  background: transparent;
+  border-color: var(--line-dark);
+}
+
+.marquee__track {
+  display: flex;
+  width: max-content;
+  animation: marquee 38s linear infinite;
+}
+
+.marquee:hover .marquee__track {
+  animation-play-state: paused;
+}
+
+.marquee__group {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: clamp(20px, 3vw, 40px);
+  padding-right: clamp(20px, 3vw, 40px);
+  font-family: var(--serif);
+  font-size: clamp(1.5rem, 3.4vw, 2.7rem);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.marquee__group em {
+  color: var(--copper-bright);
+  font-style: italic;
+  font-weight: 400;
+}
+
+.marquee--outline .marquee__group span:not(.marquee__dot) {
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(244, 239, 231, 0.5);
+}
+
+@supports not (-webkit-text-stroke: 1px #000) {
+  .marquee--outline .marquee__group span:not(.marquee__dot) {
+    color: var(--cream);
+  }
+}
+
+.marquee__dot {
+  color: var(--copper);
+  font-size: 0.5em;
+}
+
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* --- Micro-interacciones -------------------------------------------------- */
+
+/* Destello que cruza los botones al pasar el mouse. */
+.button {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.button::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: linear-gradient(115deg, transparent 32%, rgba(255, 255, 255, 0.34) 50%, transparent 68%);
+  transform: translateX(-130%);
+  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+.button:hover::after,
+.button:focus-visible::after {
+  transform: translateX(130%);
+}
+
+.text-link {
+  position: relative;
+}
+
+.text-link::after {
+  position: absolute;
+  right: 0;
+  bottom: -5px;
+  left: 0;
+  height: 1px;
+  content: "";
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: 100% 50%;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.text-link:hover::after,
+.text-link:focus-visible::after {
+  transform: scaleX(1);
+  transform-origin: 0 50%;
+}
+
+/* Las imágenes respiran al entrar y profundizan al hacer hover. */
+.pizza-card__image img,
+.menu-card__image img {
+  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pizza-card:hover .pizza-card__image img,
+.menu-card:hover .menu-card__image img {
+  transform: scale(1.07);
+}
+
+.gallery-item img {
+  transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1), filter 0.5s ease;
+  filter: saturate(0.92);
+}
+
+.gallery-item:hover img {
+  transform: scale(1.06);
+  filter: saturate(1.05);
+}
+
+.gallery-item::after {
+  transition: opacity 0.5s ease;
+}
+
+.testimonial-card {
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.5s ease, box-shadow 0.5s ease;
+}
+
+.testimonial-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(200, 120, 79, 0.45);
+  box-shadow: 0 26px 60px rgba(0, 0, 0, 0.22);
+}
+
+.whatsapp-float {
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
+}
+
+.whatsapp-float:hover {
+  transform: scale(1.06);
+  box-shadow: 0 18px 40px rgba(200, 120, 79, 0.4);
+}
+
+/* --- Números editoriales -------------------------------------------------- */
+
+.feature-item__number,
+.step__number {
+  color: var(--copper-bright);
+}
+
+@supports (-webkit-text-stroke: 1px #000) {
+  .feature-item__number,
+  .step__number {
+    color: transparent;
+    -webkit-text-stroke: 1.3px var(--copper-bright);
+  }
+}
+
+.step__number {
+  font-size: clamp(3rem, 6vw, 4.4rem);
+  letter-spacing: -0.04em;
+  transition: color 0.4s ease, -webkit-text-stroke-color 0.4s ease;
+}
+
+.step:hover .step__number {
+  color: var(--copper-bright);
+}
+
+/* --- Tipografía con intención --------------------------------------------- */
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+.page-hero h1 {
+  letter-spacing: -0.05em;
+}
+
+.price {
+  font-family: var(--serif);
+  font-size: 1.45rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* --- Reveals: entrada más cinematográfica --------------------------------- */
+
+.reveal {
+  opacity: 0;
+  transform: translate3d(0, 30px, 0);
+  transition: opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1), transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+/* --- FAQ y formularios ---------------------------------------------------- */
+
+.faq-item {
+  transition: border-color 0.4s ease, background-color 0.4s ease;
+}
+
+.faq-item[open] {
+  border-color: rgba(200, 120, 79, 0.5);
+  background: rgba(200, 120, 79, 0.05);
+}
+
+.faq-item[open] summary::after {
+  transform: rotate(135deg);
+}
+
+.form-card input:focus-visible,
+.form-card textarea:focus-visible,
+.form-card select:focus-visible {
+  border-color: var(--copper);
+  box-shadow: 0 0 0 4px rgba(200, 120, 79, 0.14);
+}
+
+/* --- Transición entre páginas --------------------------------------------- */
+
+.page-transition {
+  position: fixed;
+  z-index: 110;
+  inset: 0;
+  background: var(--ink);
+  transform: scaleY(0);
+  transform-origin: 50% 100%;
+  pointer-events: none;
+}
+
+/* --- Responsive de la capa nueva ------------------------------------------ */
+
+@media (max-width: 820px) {
+  .hero-ghost {
+    display: none;
+  }
+
+  .marquee {
+    padding: 19px 0;
+  }
+
+  body::after {
+    inset: -100px;
+    opacity: 0.04;
+  }
+}
+
+@media (max-width: 560px) {
+  .step__number {
+    font-size: 2.6rem;
+    margin-bottom: 26px;
+  }
+
+  .preloader__meta {
+    letter-spacing: 0.2em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee__track {
+    animation: none;
+    transform: none;
+  }
+
+  body::after {
+    animation: none;
+  }
+
+  .hero-badge {
+    animation: none;
+  }
+
+  .preloader {
+    display: none !important;
+  }
+
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+}

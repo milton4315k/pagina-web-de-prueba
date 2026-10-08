@@ -30,7 +30,7 @@ export const escapeHtml = (value) =>
 export const formatPrice = (value) =>
   `$${new Intl.NumberFormat('es-AR', { maximumFractionDigits: 0 }).format(value)}`;
 
-const formatBirthday = (value) => {
+export const formatBirthday = (value) => {
   if (!value) return null;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;

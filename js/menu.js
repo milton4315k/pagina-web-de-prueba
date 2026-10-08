@@ -114,11 +114,15 @@ function setupReveal(root) {
 
   const observer = new IntersectionObserver(
     (entries, instance) => {
-      for (const entry of entries) {
-        if (!entry.isIntersecting) continue;
-        entry.target.classList.add('is-visible');
-        instance.unobserve(entry.target);
-      }
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        const target = entry.target;
+        target.classList.add('is-visible');
+        setTimeout(() => {
+          target.style.transitionDelay = '';
+        }, 1100);
+        instance.unobserve(target);
+      });
     },
     { threshold: 0.12 },
   );
@@ -139,6 +143,8 @@ async function loadMenu() {
     renderFilters(categories);
     grid.hidden = false;
     applyFilter('all');
+    // Cascada de aparición, igual que en la portada.
+    if (window.nocturnaStagger) window.nocturnaStagger(grid);
     setupReveal(grid);
     if (statusLine) statusLine.textContent = '';
   } catch {

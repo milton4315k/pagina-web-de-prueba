@@ -30,8 +30,9 @@ export const pool =
         idleTimeoutMillis: 30_000,
         connectionTimeoutMillis: 5_000,
         statement_timeout: 10_000,
-        // Supavisor en modo transaction no soporta prepared statements.
-        options: '-c statement_mode=direct',
+        ...(new URL(env.DATABASE_URL).hostname.endsWith('.pooler.supabase.com')
+          ? { options: '-c statement_mode=direct' }
+          : {}),
       });
 
 if (env.NODE_ENV !== 'test') {

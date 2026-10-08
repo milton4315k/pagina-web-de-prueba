@@ -1,8 +1,11 @@
-// Cliente de la API. Todas las rutas son relativas: en producción Netlify
-// proxya /api/* al servicio de Render, así que nunca hay CORS ni una URL
-// de API hardcodeada.
+// En desarrollo, el sitio estático usa el servidor API local en :3000.
+// En producción Netlify proxya /api/* al servicio de Render.
 
-const API_BASE = '/api';
+const API_BASE =
+  ['localhost', '127.0.0.1'].includes(window.location.hostname) &&
+  window.location.port === '4173'
+    ? 'http://localhost:3000/api'
+    : '/api';
 const DEFAULT_TIMEOUT = 6000;
 
 export class ApiError extends Error {
@@ -23,7 +26,7 @@ async function request(path, { method = 'GET', body, timeout = DEFAULT_TIMEOUT }
       method,
       headers: body ? { 'Content-Type': 'application/json' } : undefined,
       body: body ? JSON.stringify(body) : undefined,
-      credentials: 'same-origin',
+      credentials: 'include',
       signal: controller.signal,
     });
 

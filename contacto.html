@@ -18,9 +18,39 @@
     <link rel="preconnect" href="https://images.unsplash.com" />
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&amp;family=DM+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
+    <script>
+      /* El preloader solo existe si hay JS: sin JS nunca tapa el contenido.
+         Y no puede quedarse pegado: si la página no carga a tiempo, se va. */
+      document.documentElement.classList.add('has-js');
+      (function () {
+        var cargada = false;
+        var ocultar = function () {
+          var el = document.querySelector('[data-preloader]');
+          if (el) el.classList.add('is-done');
+          document.dispatchEvent(new Event('nocturna:reveal'));
+        };
+        window.addEventListener('load', function () {
+          cargada = true;
+          setTimeout(ocultar, 700);
+        });
+        setTimeout(function () {
+          if (!cargada) ocultar();
+        }, 2600);
+      })();
+    </script>
   </head>
   <body data-page="contact">
     <a class="skip-link" href="#main-content">Saltar al contenido</a>
+
+    <div class="scroll-progress" aria-hidden="true"><span></span></div>
+
+    <div class="preloader" data-preloader role="status" aria-label="Cargando Nocturna Pizza">
+      <div class="preloader__inner">
+        <p class="preloader__mark"><span>NOCTURNA</span><small>Pizza</small></p>
+        <div class="preloader__line"><span class="preloader__fill"></span></div>
+        <p class="preloader__meta">Hablemos</p>
+      </div>
+    </div>
 
     <header class="site-header" id="site-header">
       <div class="topline">
@@ -54,7 +84,10 @@
         <div class="container page-hero__grid">
           <div>
             <p class="eyebrow"><span class="eyebrow__line"></span> Hablemos</p>
-            <h1>La noche<br /><em>nos conecta.</em></h1>
+            <h1>
+              <span class="title-line"><span class="title-line__inner">La noche</span></span>
+              <span class="title-line"><span class="title-line__inner"><em>nos conecta.</em></span></span>
+            </h1>
             <p class="lead">¿Querés hacer un pedido, consultar una combinación o saber cómo retirarla? Escribinos por WhatsApp: respondemos desde el mismo lugar donde empieza la pizza.</p>
           </div>
           <aside class="page-hero__aside">
@@ -202,6 +235,23 @@
       </section>
     </main>
 
+    <div class="marquee marquee--outline" aria-hidden="true">
+      <div class="marquee__track">
+        <div class="marquee__group">
+          <span>Pedí por WhatsApp</span><span class="marquee__dot">✦</span>
+          <span>Retiro y entrega</span><span class="marquee__dot">✦</span>
+          <span>Pase Nocturno</span><span class="marquee__dot">✦</span>
+          <span>20 puntos de bienvenida</span><span class="marquee__dot">✦</span>
+        </div>
+        <div class="marquee__group">
+          <span>Pedí por WhatsApp</span><span class="marquee__dot">✦</span>
+          <span>Retiro y entrega</span><span class="marquee__dot">✦</span>
+          <span>Pase Nocturno</span><span class="marquee__dot">✦</span>
+          <span>20 puntos de bienvenida</span><span class="marquee__dot">✦</span>
+        </div>
+      </div>
+    </div>
+
     <footer class="site-footer">
       <div class="container footer-grid">
         <div class="footer-brand-column">
@@ -233,6 +283,9 @@
     </a>
 
     <script src="script.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js" defer></script>
+    <script src="js/motion.js" defer></script>
     <script type="module" src="js/pase-ui.js"></script>
     <script type="module" src="js/contacto.js"></script>
   </body>

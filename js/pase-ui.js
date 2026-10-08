@@ -142,14 +142,21 @@ const passView = () => document.querySelector('[data-pase-view]');
 
 const openDialog = () => {
   const element = dialog();
-  if (!element) return;
-  // showModal() maneja el foco atrapado y Esc.
+  if (!element) return fallback();
+  // showModal() maneja el foco atrapado y Esc. Sin soporte (navegador viejo)
+  // no podemos mostrar nada: mejor mandar a WhatsApp que dejarlo mudo.
+  if (typeof element.showModal !== 'function') return fallback();
   if (currentPass) renderPass(currentPass);
   else showRegister();
   element.showModal();
 };
 
 const closeDialog = () => dialog()?.close();
+
+/** Pasamanos al fallback de script.js cuando este módulo no puede mostrar nada. */
+const fallback = () => {
+  if (typeof window.nocturnaPaseFallback === 'function') window.nocturnaPaseFallback();
+};
 
 // --- Botón de la navbar --------------------------------------------------
 
@@ -474,11 +481,15 @@ async function init() {
   const trigger = document.querySelector('[data-pase-trigger]');
   if (!trigger) return;
 
-  trigger.addEventListener('click', openDialog);
-  updateTrigger(null);
-
   buildDialog();
   showRegister();
+  updateTrigger(null);
+
+  // El botón queda en manos de este módulo recién acá, y la marca lo dice.
+  // Si algo falló antes de este punto, script.js ve el clic sin la marca y lo
+  // manda a WhatsApp: el botón nunca se queda mudo.
+  trigger.addEventListener('click', openDialog);
+  trigger.setAttribute('data-pase-ready', '');
 
   if (!hasToken()) return;
 
@@ -495,4 +506,10 @@ async function init() {
   }
 }
 
-if (document.querySelector('[data-pase-trigger]')) init();
+if (document.querySelector('[data-pase-trigger]')) {
+  // Un módulo que revienta al cargar deja el botón sin manejador: acá al menos
+  // queda el error en consola y script.js se encarga del clic.
+  init().catch((error) => {
+    console.error('Pase Nocturno: no se pudo montar el modal.', error);
+  });
+}

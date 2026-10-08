@@ -178,6 +178,42 @@ test('las tres páginas ofrecen el pase sin JavaScript', async () => {
   }
 });
 
+test('js/pase-ui.js y js/contacto.js se pueden importar enteros', async () => {
+  // Si un import pide un nombre que pase.js no exporta, el navegador aborta el
+  // módulo ANTES de ejecutar una línea: el botón del pase queda mudo y el único
+  // rastro es un SyntaxError en la consola. Importarlos acá resuelve el link,
+  // así que un nombre que falta hace fallar este test.
+  globalThis.document ??= {
+    createElement: () => ({}),
+    head: { append: () => {} },
+    body: { append: () => {} },
+    querySelector: () => null,
+  };
+  // api.js decide la base de la API con window.location.
+  globalThis.window ??= { location: { hostname: 'localhost', port: '4173' } };
+
+  await import('../../js/pase-ui.js');
+  await import('../../js/contacto.js');
+});
+
+test('el botón del pase tiene fallback a WhatsApp si el módulo no carga', async () => {
+  // El contrato entre script.js y js/pase-ui.js: el módulo marca el botón
+  // como propio solo cuando quedó montado; sin esa marca, script.js manda
+  // a WhatsApp en vez de dejar el botón mudo.
+  const { readFile } = await import('node:fs/promises');
+  const { fileURLToPath } = await import('node:url');
+  const path = await import('node:path');
+  const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+
+  const script = await readFile(path.join(root, 'script.js'), 'utf8');
+  const paseUi = await readFile(path.join(root, 'js', 'pase-ui.js'), 'utf8');
+
+  assert.match(script, /nocturnaPaseFallback/, 'script.js no expone el fallback');
+  assert.match(script, /data-pase-ready/, 'script.js no chequea la marca del módulo');
+  assert.match(paseUi, /nocturnaPaseFallback/, 'pase-ui.js no usa el fallback');
+  assert.match(paseUi, /data-pase-ready/, 'pase-ui.js no marca el botón como propio');
+});
+
 test('la UI calcula los mismos puntos por pedido', () => {
   // La barra del pase y la acreditación usan la misma regla.
   assert.equal(pointsForOrder(18400), 18);

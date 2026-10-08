@@ -69,6 +69,7 @@ async function loadFeatured() {
 
     grid.innerHTML = pizzas.slice(0, 3).map(cardTemplate).join('');
     grid.hidden = false;
+    if (window.nocturnaStagger) window.nocturnaStagger(grid);
     setupReveal(grid);
   } catch {
     grid.hidden = false;
