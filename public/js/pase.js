@@ -1,11 +1,20 @@
 // Cliente del Pase Nocturno para el frontend público.
 //
-// El device_token se guarda en localStorage, pero NO es la fuente de verdad:
-// los puntos siempre se leen de la API. Editar localStorage no cambia el saldo.
+// La identidad ahora es la cuenta de Google del usuario (Supabase Auth). El
+// navegador manda el access token de Supabase en el header Authorization y el
+// servidor lo valida. Los puntos SIEMPRE se leen de la API: el navegador no es
+// fuente de verdad.
 
-const STORAGE_KEY = 'nocturna_pase';
+import {
+  getAccessToken,
+  getSession,
+  loadConfig,
+  signInWithGoogle,
+  signOut,
+} from './supabase.js';
+
 const API_BASE = '/api/members';
-const TIMEOUT = 8000;
+const TIMEOUT = 12000;
 
 /** Configuración pública del pase. La usa la UI, no la lógica de negocio. */
 export const PASSE_RULES = {
@@ -26,7 +35,7 @@ export const escapeHtml = (value) =>
       ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char],
   );
 
-/** Igual que server/src/lib/whatsapp.js: incluye el signo. */
+/** Igual que el servidor: incluye el signo. */
 export const formatPrice = (value) =>
   `$${new Intl.NumberFormat('es-AR', { maximumFractionDigits: 0 }).format(value)}`;
 
@@ -37,48 +46,33 @@ export const formatBirthday = (value) => {
   return date.toLocaleDateString('es-AR', { day: 'numeric', month: 'long' });
 };
 
-// --- Token local ---------------------------------------------------------
+export { signInWithGoogle, signOut };
 
-/** Guarda solo el token. El nombre y los puntos nunca se guardan. */
-export function saveToken(token) {
-  try {
-    localStorage.setItem(STORAGE_KEY, token);
-  } catch {
-    // Modo privado o sin permiso: el pase funciona igual en esta sesión.
-  }
+export async function isLoggedIn() {
+  return Boolean(await getSession());
 }
 
-export function getToken() {
-  try {
-    return localStorage.getItem(STORAGE_KEY);
-  } catch {
-    return null;
-  }
+/** ¿Está configurado el login en el servidor? */
+export async function loginConfigured() {
+  const config = await loadConfig();
+  return Boolean(config.supabaseUrl && config.supabaseAnonKey);
 }
-
-export function clearToken() {
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch {
-    // Nada que hacer.
-  }
-}
-
-export const hasToken = () => Boolean(getToken());
 
 // --- API -----------------------------------------------------------------
 
-async function request(path, { method = 'GET', body, auth = false } = {}) {
+async function request(path, { method = 'GET', body } = {}) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT);
 
   try {
+    const headers = {};
+    if (body) headers['Content-Type'] = 'application/json';
+    const token = await getAccessToken();
+    if (token) headers.Authorization = `Bearer ${token}`;
+
     const response = await fetch(`${API_BASE}${path}`, {
       method,
-      headers: {
-        ...(body ? { 'Content-Type': 'application/json' } : {}),
-        ...(auth && getToken() ? { Authorization: `Bearer ${getToken()}` } : {}),
-      },
+      headers,
       body: body ? JSON.stringify(body) : undefined,
       credentials: 'same-origin',
       signal: controller.signal,
@@ -105,67 +99,52 @@ async function request(path, { method = 'GET', body, auth = false } = {}) {
   }
 }
 
-/**
- * Registra al cliente. Si el teléfono ya estaba dado de alta, la API devuelve
- * el pase existente: el token se guarda igual y el saldo real se ve después.
- */
-export async function register({ name, phone, birthday }) {
-  const data = await request('/', {
-    method: 'POST',
-    body: {
-      name,
-      phone,
-      birthday: birthday || '',
-      deviceLabel: navigator.userAgent.slice(0, 120),
-    },
-  });
-
-  saveToken(data.token);
-  return { pass: data.pass, created: data.created };
-}
-
-/** Trae el pase real. Devuelve null si el token no sirve o la API está caída. */
+/** Trae el pase del usuario logueado. Devuelve null si no hay sesión o falla. */
 export async function fetchPass() {
-  if (!getToken()) return null;
+  if (!(await getSession())) return null;
   try {
-    const { pass } = await request('/me', { auth: true });
-    return pass;
+    const data = await request('/me');
+    return { pass: data.pass, created: Boolean(data.created) };
   } catch (error) {
-    // 401: el token no corresponde a nadie. Lo sacamos para no reintentar.
-    if (error.status === 401) clearToken();
+    if (error.status === 401) await signOut().catch(() => {});
     return null;
   }
 }
 
-/**
- * Igual que fetchPass pero no limpia el token ante un 401.
- * Para armar un mensaje de pedido aunque el pase ya no exista.
- */
-export async function loadPassForOrder() {
-  if (!getToken()) return null;
-  try {
-    const { pass } = await request('/me', { auth: true });
-    return pass;
-  } catch {
-    return null;
-  }
+/** Completa o corrige el perfil del socio (nombre, WhatsApp, cumpleaños). */
+export async function updateProfile({ name, phone, birthday }) {
+  const data = await request('/me', {
+    method: 'PATCH',
+    body: { name, phone, birthday: birthday || '' },
+  });
+  return data.pass;
 }
 
 /** Pide un beneficio. No lo consume: lo confirmás vos desde el panel. */
 export async function requestRedemption(benefitKey, notes = '') {
-  return request('/redeem', {
-    method: 'POST',
-    auth: true,
-    body: { benefit: benefitKey, notes },
-  });
+  return request('/redeem', { method: 'POST', body: { benefit: benefitKey, notes } });
 }
 
-/** Reenvía el código de socio por WhatsApp, útil si perdió el dispositivo. */
+/** Manda el código de socio al WhatsApp del local. */
 export async function resendCode() {
-  return request('/request-code', { method: 'POST', auth: true });
+  return request('/request-code', { method: 'POST' });
 }
 
 // --- Mensaje de pedido con el pase ---------------------------------------
+
+/**
+ * Igual que fetchPass pero sin cerrar sesión ante un error.
+ * Para armar un mensaje de pedido aunque el pase no cargue.
+ */
+export async function loadPassForOrder() {
+  if (!(await getSession())) return null;
+  try {
+    const data = await request('/me');
+    return data.pass;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Arma el mensaje de pedido del cliente, con su código de socio.
@@ -185,9 +164,7 @@ export function buildOrderMessageWithPass({ pass, name, order, method, contact, 
     `Quiero pedir: ${order}.`,
     `Modalidad: ${METHOD_LABELS[method] || method || 'una consulta'}.`,
     benefit('welcome')?.available ? 'Quiero canjear mi 10% OFF de bienvenida.' : '',
-    benefit('birthday')?.available
-      ? 'Hoy es mi cumpleaños, quiero el postre sin cargo.'
-      : '',
+    benefit('birthday')?.available ? 'Hoy es mi cumpleaños, quiero el postre sin cargo.' : '',
     contact ? `Contacto: ${contact}.` : '',
     notes ? `Detalle: ${notes}` : '',
     '¿Me confirmás disponibilidad y forma de pago?',

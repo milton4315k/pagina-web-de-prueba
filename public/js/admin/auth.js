@@ -1,12 +1,16 @@
-// Guard de sesión del panel. Redirige a login.html si no hay cookie válida.
+// Guard de sesión del panel.
+//
+// Verifica contra /api/admin/session que el usuario esté logueado con Google y
+// que su email esté en ADMIN_EMAILS. Si no, redirige a login.html.
 
 import { adminApi } from './api.js';
+import { signOut } from '../supabase.js';
 
-/** @returns {Promise<{authenticated: boolean, staff: object|null}>} */
+/** @returns {Promise<{authenticated: boolean, isAdmin: boolean, user: object|null}>} */
 export async function requireAuth() {
   try {
     const session = await adminApi.session();
-    if (!session.authenticated) throw new Error('sin sesión');
+    if (!session.authenticated || !session.isAdmin) throw new Error('sin sesión');
     return session;
   } catch {
     window.location.href = new URL('login.html', window.location.href).href;
@@ -16,9 +20,9 @@ export async function requireAuth() {
 
 export async function logout() {
   try {
-    await adminApi.logout();
+    await signOut();
   } catch {
-    // Si el logout falla igual, limpiamos la vista local.
+    // Si el signOut falla igual volvemos al login.
   }
   window.location.href = new URL('login.html', window.location.href).href;
 }

@@ -1,8 +1,13 @@
-// Cliente de la API del panel. La sesión vive en una cookie httpOnly que
-// no podemos leer desde JS: por eso no guardamos tokens en localStorage.
+// Cliente de la API del panel.
+//
+// La sesión la maneja Supabase Auth (login con Google). El access token de
+// Supabase viaja en el header Authorization y el servidor valida que el email
+// esté en ADMIN_EMAILS.
+
+import { getAccessToken } from '../supabase.js';
 
 const API_BASE = '/api/admin';
-const DEFAULT_TIMEOUT = 10000;
+const DEFAULT_TIMEOUT = 12000;
 
 export class AdminApiError extends Error {
   constructor(message, status, details = []) {
@@ -18,9 +23,14 @@ async function request(path, { method = 'GET', body } = {}) {
   const timer = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT);
 
   try {
+    const token = await getAccessToken();
+    const headers = {};
+    if (body) headers['Content-Type'] = 'application/json';
+    if (token) headers.Authorization = `Bearer ${token}`;
+
     const response = await fetch(`${API_BASE}${path}`, {
       method,
-      headers: body ? { 'Content-Type': 'application/json' } : undefined,
+      headers,
       body: body ? JSON.stringify(body) : undefined,
       credentials: 'same-origin',
       signal: controller.signal,
@@ -30,9 +40,6 @@ async function request(path, { method = 'GET', body } = {}) {
     const data = text ? JSON.parse(text) : {};
 
     if (!response.ok) {
-      if (response.status === 401) {
-        window.location.href = new URL('login.html', window.location.href).href;
-      }
       throw new AdminApiError(
         data.message || `Error ${response.status}`,
         response.status,
@@ -62,9 +69,6 @@ const query = (params) => {
 
 export const adminApi = {
   session: () => request('/session'),
-  requestLogin: () => request('/login/request', { method: 'POST' }),
-  verifyLogin: (token) => request('/login/verify', { method: 'POST', body: { token } }),
-  logout: () => request('/logout', { method: 'POST' }),
 
   orders: (filters = {}) => request(`/orders${query(filters)}`),
   order: (id) => request(`/orders/${id}`),

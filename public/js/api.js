@@ -1,12 +1,8 @@
-// En desarrollo, el sitio estático usa el servidor API local en :3000.
-// En producción Netlify proxya /api/* al servicio de Render.
+// El frontend lo sirve el mismo servidor que la API, así que /api siempre es
+// el mismo origen (en local y en producción). Nada de URLs hardcodeadas.
 
-const API_BASE =
-  ['localhost', '127.0.0.1'].includes(window.location.hostname) &&
-  window.location.port === '4173'
-    ? 'http://localhost:3000/api'
-    : '/api';
-const DEFAULT_TIMEOUT = 6000;
+const API_BASE = '/api';
+const DEFAULT_TIMEOUT = 8000;
 
 export class ApiError extends Error {
   constructor(message, status, details = []) {

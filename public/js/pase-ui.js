@@ -1,19 +1,23 @@
-// UI del Pase Nocturno: el botón de la navbar ya está en el HTML de cada
-// página, así que sin JS el pase sigue siendo visible. Este módulo solo
-// actualiza ese botón con los puntos y monta el modal con el registro.
+// UI del Pase Nocturno.
+//
+// El botón de la navbar ya está en el HTML de cada página. Este módulo lo
+// actualiza con los puntos y monta el modal. La identidad es la cuenta de
+// Google (Supabase Auth): si no hay sesión, el modal invita a entrar; si hay,
+// muestra el pase.
 
 import {
   PASSE_RULES,
-  clearToken,
   escapeHtml,
   fetchPass,
   formatBirthday,
   formatPrice,
-  getToken,
-  hasToken,
-  register,
+  isLoggedIn,
+  loginConfigured,
   requestRedemption,
   resendCode,
+  signInWithGoogle,
+  signOut,
+  updateProfile,
 } from './pase.js';
 
 // --- Estilos -------------------------------------------------------------
@@ -50,6 +54,12 @@ const STYLES = `
 .pase-error { margin: 0 0 14px; padding: 10px 12px; border: 1px solid #e07a6b;
   border-radius: 10px; color: #e07a6b; font-size: .8rem; }
 .pase-error:empty { display: none; }
+.pase-google { display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; min-height: 46px; margin-bottom: 14px; border: 1px solid var(--line-light);
+  border-radius: 10px; background: var(--cream); color: var(--ink); font: inherit;
+  font-weight: 600; font-size: .88rem; cursor: pointer; }
+.pase-google:hover { filter: brightness(.96); }
+.pase-google:disabled { opacity: .6; cursor: default; }
 
 /* La tarjeta */
 .pase-card { position: relative; overflow: hidden; padding: 28px; border-radius: 20px;
@@ -98,7 +108,7 @@ const STYLES = `
   font-family: 'Cormorant Garamond', Georgia, serif; font-size: clamp(2rem, 9vw, 2.9rem);
   font-weight: 700; letter-spacing: .08em; line-height: 1.1; word-break: break-word; }
 
-/* Vista previa de los beneficios en el formulario de registro. */
+/* Vista previa de los beneficios en el modal. */
 .pase-preview { margin: 0 0 20px; padding: 0 0 0 18px; color: var(--muted); font-size: .78rem; }
 .pase-preview li { margin-bottom: 3px; }
 
@@ -135,35 +145,34 @@ document.head.append(styleTag);
 // --- Estado local de la vista -------------------------------------------
 
 let currentPass = null;
+let pendingWelcome = false;
 
 const dialog = () => document.querySelector('[data-pase-dialog]');
-const registerView = () => document.querySelector('[data-pase-register]');
-const passView = () => document.querySelector('[data-pase-view]');
-
-const openDialog = () => {
-  const element = dialog();
-  if (!element) return fallback();
-  // showModal() maneja el foco atrapado y Esc. Sin soporte (navegador viejo)
-  // no podemos mostrar nada: mejor mandar a WhatsApp que dejarlo mudo.
-  if (typeof element.showModal !== 'function') return fallback();
-  if (currentPass) renderPass(currentPass);
-  else showRegister();
-  element.showModal();
+const content = () => document.querySelector('[data-pase-content]');
+const setContent = (html) => {
+  const element = content();
+  if (element) element.innerHTML = html;
 };
 
-const closeDialog = () => dialog()?.close();
-
-/** Pasamanos al fallback de script.js cuando este módulo no puede mostrar nada. */
 const fallback = () => {
   if (typeof window.nocturnaPaseFallback === 'function') window.nocturnaPaseFallback();
 };
 
+const closeDialog = () => dialog()?.close();
+
+async function openDialog() {
+  const element = dialog();
+  if (!element) return fallback();
+  if (typeof element.showModal !== 'function') return fallback();
+  element.showModal();
+
+  if (currentPass) return renderPass(currentPass);
+  if (await isLoggedIn()) return loadPassView();
+  return showLogin();
+}
+
 // --- Botón de la navbar --------------------------------------------------
 
-/**
- * El botón vive en el HTML de cada página. Acá solo le ponemos los puntos:
- * si este módulo no corre, el botón sigue siendo visible y lleva al <noscript>.
- */
 function updateTrigger(pass) {
   const trigger = document.querySelector('[data-pase-trigger]');
   if (!trigger) return;
@@ -175,97 +184,78 @@ function updateTrigger(pass) {
     trigger.setAttribute('aria-label', `Mi Pase Nocturno, ${pass.points} puntos`);
   } else {
     trigger.innerHTML = '<span aria-hidden="true">🔑</span> Mi Pase Nocturno';
-    trigger.setAttribute('aria-label', 'Crear mi Pase Nocturno');
+    trigger.setAttribute('aria-label', 'Entrar a mi Pase Nocturno');
   }
 }
 
-// --- Modal de registro ---------------------------------------------------
+// --- Vistas --------------------------------------------------------------
 
-function showRegister() {
-  registerView().hidden = false;
-  passView().hidden = true;
-  passView().innerHTML = '';
-  dialog()?.querySelector('[data-pase-form]')?.reset();
-  const error = dialog()?.querySelector('[data-pase-error]');
-  if (error) error.textContent = '';
-}
-
-function registerViewTemplate() {
-  const [welcome, drink, margherita, birthday] = PASSE_RULES.benefits;
-  return `
-    <div data-pase-register>
-      <h2>Creá tu Pase Nocturno</h2>
+function showLogin() {
+  setContent(`
+    <div>
+      <h2>Tu Pase Nocturno</h2>
       <p>
-        Registrate en 10 segundos y llevate
+        Entrá con tu cuenta de Google y llevate
         <strong>${PASSE_RULES.welcomePoints} puntos de regalo</strong>.
         Un punto cada ${formatPrice(PASSE_RULES.pointsPerPeso)} que gastes.
       </p>
 
       <ul class="pase-preview">
-        <li>${escapeHtml(welcome.label)}</li>
-        <li>${drink.threshold} pts · ${escapeHtml(drink.label)}</li>
-        <li>${margherita.threshold} pts · ${escapeHtml(margherita.label)}</li>
-        <li>${escapeHtml(birthday.label)}</li>
+        <li>${escapeHtml(PASSE_RULES.benefits[0].label)}</li>
+        <li>${PASSE_RULES.benefits[1].threshold} pts · ${escapeHtml(PASSE_RULES.benefits[1].label)}</li>
+        <li>${PASSE_RULES.benefits[2].threshold} pts · ${escapeHtml(PASSE_RULES.benefits[2].label)}</li>
+        <li>${escapeHtml(PASSE_RULES.benefits[3].label)}</li>
       </ul>
+
+      <p class="pase-error" data-pase-error role="alert"></p>
+
+      <button class="pase-google" type="button" data-pase-login>
+        <span aria-hidden="true">🔐</span> Entrar con Google
+      </button>
+      <button class="button button--outline" type="button" data-pase-cancel>Ahora no</button>
+
+      <p class="pase-dialog__hint">
+        Usamos tu nombre y tu email de Google solo para tu pase. Después nos
+        contás tu WhatsApp para avisarte de los premios.
+      </p>
+    </div>`);
+}
+
+function showProfile(pass) {
+  setContent(`
+    <div>
+      <h2>Completá tu Pase</h2>
+      <p>
+        Entraste como <strong>${escapeHtml(pass.email ?? '')}</strong>.
+        Solo nos falta tu WhatsApp para avisarte cuando tengas un premio.
+      </p>
 
       <form data-pase-form>
         <p class="pase-error" data-pase-error role="alert"></p>
 
         <label for="pase-name">Nombre y apellido</label>
         <input id="pase-name" name="name" type="text" autocomplete="name"
-               placeholder="Ej: Franco Ruiz" required maxlength="120" />
+               value="${escapeHtml(pass.name ?? '')}" required maxlength="120" />
 
         <label for="pase-phone">WhatsApp</label>
         <input id="pase-phone" name="phone" type="tel" autocomplete="tel"
                placeholder="11 2849-3108" required maxlength="25" />
 
         <label for="pase-birthday">Fecha de cumpleaños <span class="pase-dialog__hint">(opcional)</span></label>
-        <input id="pase-birthday" name="birthday" type="date" />
+        <input id="pase-birthday" name="birthday" type="date"
+               value="${pass.birthday ? String(pass.birthday).slice(0, 10) : ''}" />
 
         <div class="pase-dialog__actions">
-          <button class="button button--primary" type="submit">Crear mi Pase</button>
-          <button class="button button--outline" type="button" data-pase-cancel>Ahora no</button>
+          <button class="button button--primary" type="submit">Guardar mi pase</button>
+          <button class="button button--outline" type="button" data-pase-signout>Cerrar sesión</button>
         </div>
       </form>
 
       <p class="pase-dialog__hint">
-        Guardamos tu nombre, tu WhatsApp y la fecha de cumpleaños para poder
-        avisarte beneficios. Tu pase queda en este dispositivo.
+        Guardamos tu nombre, tu WhatsApp y tu cumpleaños para avisarte beneficios.
       </p>
-    </div>`;
+    </div>`);
 }
-
-async function submitRegistration(form) {
-  const error = form.querySelector('[data-pase-error]');
-  const submit = form.querySelector('button[type="submit"]');
-  const data = new FormData(form);
-
-  error.textContent = '';
-  submit.disabled = true;
-  submit.textContent = 'Creando tu pase…';
-
-  try {
-    const { pass, created } = await register({
-      name: data.get('name')?.toString().trim(),
-      phone: data.get('phone')?.toString().trim(),
-      birthday: data.get('birthday')?.toString().trim(),
-    });
-
-    currentPass = pass;
-    updateTrigger(pass);
-
-    // Recién registrado: primero el código para mandarlo, después la tarjeta.
-    if (created) renderWelcomeStep(pass);
-    else renderPass(pass);
-  } catch (caught) {
-    error.textContent = caught.message || 'No pudimos crear tu pase.';
-  } finally {
-    submit.disabled = false;
-    submit.textContent = 'Crear mi Pase';
-  }
-}
-
-// --- La tarjeta del pase -------------------------------------------------
 
 function benefitTemplate(benefit) {
   const tag = benefit.redeemed
@@ -294,11 +284,7 @@ function benefitTemplate(benefit) {
 
 /** Paso de recién registrado: el código en grande y el botón de mandarlo. */
 function renderWelcomeStep(pass) {
-  const view = passView();
-  registerView().hidden = true;
-  view.hidden = false;
-
-  view.innerHTML = `
+  setContent(`
     <div class="pase-card">
       <div class="pase-card__top">
         <span class="pase-card__label">🍕 Mi Pase Nocturna</span>
@@ -324,14 +310,10 @@ function renderWelcomeStep(pass) {
           Ver mi pase
         </button>
       </div>
-    </div>`;
+    </div>`);
 }
 
-function renderPass(pass, { justRegistered = false } = {}) {
-  const view = passView();
-  registerView().hidden = true;
-  view.hidden = false;
-
+function renderPass(pass) {
   const birthday = formatBirthday(pass.birthday);
   const cumple = pass.birthdayActive
     ? '<p class="pase-birthday">🎂 ¡Feliz cumpleaños! Tenés postre sin cargo esta semana.</p>'
@@ -344,7 +326,7 @@ function renderPass(pass, { justRegistered = false } = {}) {
     ? `Te faltan <strong>${pass.pointsToNext} pts</strong> para ${escapeHtml(pass.nextBenefit.label)}.`
     : 'Completaste todos los beneficios del programa. ¡Seguí acumulando!';
 
-  view.innerHTML = `
+  setContent(`
     <div class="pase-card">
       <div class="pase-card__top">
         <span class="pase-card__label">🍕 Mi Pase Nocturna</span>
@@ -382,15 +364,91 @@ function renderPass(pass, { justRegistered = false } = {}) {
       <p class="pase-resend-error" data-pase-resend-error role="alert" hidden></p>
 
       <p class="pase-card__note">
-        Un punto por cada $${formatPrice(PASSE_RULES.pointsPerPeso)} gastados.
+        Un punto por cada ${formatPrice(PASSE_RULES.pointsPerPeso)} gastados.
         Los puntos se acreditan cuando el local marca el pedido como entregado.
-        <button class="text-link" type="button" data-pase-forget>Olvidar este dispositivo</button>
+        <button class="text-link" type="button" data-pase-signout>Cerrar sesión</button>
       </p>
-    </div>`;
+    </div>`);
+}
+
+// --- Acciones ------------------------------------------------------------
+
+async function loadPassView() {
+  setContent('<p class="pase-dialog__hint">Cargando tu pase…</p>');
+
+  const result = await fetchPass();
+  if (!result) {
+    currentPass = null;
+    updateTrigger(null);
+    showLogin();
+    return;
+  }
+
+  currentPass = result.pass;
+  pendingWelcome = result.created;
+  updateTrigger(currentPass);
+
+  if (!currentPass.phone) showProfile(currentPass);
+  else if (pendingWelcome) renderWelcomeStep(currentPass);
+  else renderPass(currentPass);
+}
+
+async function login() {
+  const errorBox = dialog()?.querySelector('[data-pase-error]');
+  const button = dialog()?.querySelector('[data-pase-login]');
+  if (errorBox) errorBox.textContent = '';
+
+  try {
+    if (!(await loginConfigured())) {
+      if (errorBox) errorBox.textContent = 'El login todavía no está configurado. Avisale al local.';
+      return;
+    }
+    if (button) {
+      button.disabled = true;
+      button.textContent = 'Abriendo Google…';
+    }
+    await signInWithGoogle(window.location.href);
+  } catch (error) {
+    if (button) {
+      button.disabled = false;
+      button.innerHTML = '<span aria-hidden="true">🔐</span> Entrar con Google';
+    }
+    if (errorBox) errorBox.textContent = error.message || 'No pudimos abrir Google.';
+  }
+}
+
+async function submitProfile(form) {
+  const error = form.querySelector('[data-pase-error]');
+  const submit = form.querySelector('button[type="submit"]');
+  const data = new FormData(form);
+
+  error.textContent = '';
+  submit.disabled = true;
+  submit.textContent = 'Guardando…';
+
+  try {
+    const pass = await updateProfile({
+      name: data.get('name')?.toString().trim(),
+      phone: data.get('phone')?.toString().trim(),
+      birthday: data.get('birthday')?.toString().trim(),
+    });
+    currentPass = pass;
+    updateTrigger(pass);
+    if (pendingWelcome) {
+      pendingWelcome = false;
+      renderWelcomeStep(pass);
+    } else {
+      renderPass(pass);
+    }
+  } catch (caught) {
+    error.textContent = caught.message || 'No pudimos guardar tu pase.';
+  } finally {
+    submit.disabled = false;
+    submit.textContent = 'Guardar mi pase';
+  }
 }
 
 async function redeem(benefitKey, button) {
-  // El mensaje de error va junto al botón que falló, no al primero de la lista.
   const errorBox = button.parentElement?.querySelector('[data-pase-redeem-error]');
   if (errorBox) errorBox.textContent = '';
 
@@ -400,7 +458,6 @@ async function redeem(benefitKey, button) {
 
   try {
     const result = await requestRedemption(benefitKey);
-    // El canje lo confirmás vos: el botón abre WhatsApp con el pedido listo.
     const opened = window.open(result.whatsappUrl, '_blank', 'noopener,noreferrer');
     if (!opened) window.location.href = result.whatsappUrl;
     button.textContent = 'Pedido ✅';
@@ -415,7 +472,6 @@ async function redeem(benefitKey, button) {
   }
 }
 
-/** Abre el WhatsApp con el código. Si el popup lo bloquea, cae a location. */
 async function resend() {
   const target = dialog()?.querySelector('[data-pase-resend-error]');
   if (target) {
@@ -435,6 +491,14 @@ async function resend() {
   }
 }
 
+async function signOutAndReset() {
+  await signOut().catch(() => {});
+  currentPass = null;
+  pendingWelcome = false;
+  updateTrigger(null);
+  showLogin();
+}
+
 // --- Montaje -------------------------------------------------------------
 
 function buildDialog() {
@@ -445,12 +509,12 @@ function buildDialog() {
   element.innerHTML = '<div class="pase-dialog__inner" data-pase-content></div>';
   document.body.append(element);
 
-  element.querySelector('[data-pase-content]').innerHTML =
-    registerViewTemplate() + '<div data-pase-view hidden></div>';
-
   element.addEventListener('click', (event) => {
     if (event.target === element) closeDialog();
     if (event.target.closest('[data-pase-cancel]')) closeDialog();
+
+    if (event.target.closest('[data-pase-login]')) login();
+    if (event.target.closest('[data-pase-signout]')) signOutAndReset();
 
     const redeemButton = event.target.closest('[data-pase-redeem]');
     if (redeemButton) redeem(redeemButton.dataset.paseRedeem, redeemButton);
@@ -458,20 +522,13 @@ function buildDialog() {
     if (event.target.closest('[data-pase-resend]')) resend();
     if (event.target.closest('[data-pase-send-code]')) resend();
     if (event.target.closest('[data-pase-skip]') && currentPass) renderPass(currentPass);
-
-    if (event.target.closest('[data-pase-forget]')) {
-      clearToken();
-      currentPass = null;
-      updateTrigger(null);
-      showRegister();
-    }
   });
 
   element.addEventListener('submit', (event) => {
     const form = event.target.closest('[data-pase-form]');
     if (!form) return;
     event.preventDefault();
-    submitRegistration(form);
+    submitProfile(form);
   });
 
   return element;
@@ -482,33 +539,21 @@ async function init() {
   if (!trigger) return;
 
   buildDialog();
-  showRegister();
+  showLogin();
   updateTrigger(null);
 
-  // El botón queda en manos de este módulo recién acá, y la marca lo dice.
-  // Si algo falló antes de este punto, script.js ve el clic sin la marca y lo
-  // manda a WhatsApp: el botón nunca se queda mudo.
+  // Si este módulo monta bien, marca el botón como suyo; si no, script.js
+  // atiende el clic con el fallback de WhatsApp.
   trigger.addEventListener('click', openDialog);
   trigger.setAttribute('data-pase-ready', '');
 
-  if (!hasToken()) return;
+  if (!(await isLoggedIn())) return;
 
-  // Botón optimista mientras va la request, y el real cuando llega.
   updateTrigger({ points: '…' });
-
-  const pass = await fetchPass();
-  if (pass) {
-    currentPass = pass;
-    updateTrigger(pass);
-  } else {
-    clearToken();
-    updateTrigger(null);
-  }
+  await loadPassView();
 }
 
 if (document.querySelector('[data-pase-trigger]')) {
-  // Un módulo que revienta al cargar deja el botón sin manejador: acá al menos
-  // queda el error en consola y script.js se encarga del clic.
   init().catch((error) => {
     console.error('Pase Nocturno: no se pudo montar el modal.', error);
   });

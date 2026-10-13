@@ -1,0 +1,21 @@
+{
+  "name": "nocturna-pizza",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Nocturna Pizza: backend único (server.js) + frontend estático en public/. Supabase (Postgres + Auth con Google) y OpenAI.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "migrate": "node server.js migrate",
+    "seed": "node server.js seed"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "pg": "^8.13.1",
+    "zod": "^3.24.1"
+  }
+}
