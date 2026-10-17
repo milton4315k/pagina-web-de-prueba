@@ -1,8 +1,8 @@
-# Netlify publica la raíz del repo. La API vive en Render y se proxya por
+# Netlify publica el frontend estático en public/. La API vive en Render y se proxya por
 # /api/* para que el frontend use rutas relativas (sin CORS ni URL hardcodeada).
 
 [build]
-  publish = "."
+  publish = "public"
   command = "echo 'Sitio estático: no hace falta build'"
 
 [[redirects]]
