@@ -23,7 +23,7 @@ export const PASSE_RULES = {
   benefits: [
     { key: 'welcome', threshold: 0, label: '10% OFF en tu primer pedido' },
     { key: 'drink', threshold: 50, label: 'Fainá o bebida a elección' },
-    { key: 'margherita', threshold: 100, label: 'Nocturna Margherita gratis' },
+    { key: 'margherita', threshold: 100, label: 'Margherita gratis' },
     { key: 'birthday', threshold: null, label: 'Postre de la casa sin cargo' },
   ],
 };

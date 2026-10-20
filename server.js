@@ -237,7 +237,7 @@ const BENEFITS = [
   {
     key: 'margherita',
     threshold: 100,
-    label: 'Nocturna Margherita gratis',
+    label: 'Margherita gratis',
     description: 'Canjeás los 100 puntos por una pizza.',
   },
   {
@@ -2040,14 +2040,14 @@ const SEED_CATEGORIES = [
 ];
 
 const SEED_PIZZAS = [
-  { slug: 'nocturna-margherita', name: 'Nocturna Margherita', category: 'classic', price: 15500, imageUrl: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=800&q=85', ingredients: 'Masa casa, mozzarella, tomate, albahaca, aceite de oliva', sortOrder: 1 },
-  { slug: 'napoles-tradicional', name: 'Nápoles Tradicional', category: 'classic', price: 17200, imageUrl: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=800&q=85', ingredients: 'Masa napolitana, tomate San Marzano, mozzarella, orégano', sortOrder: 2 },
-  { slug: 'pepperoni-de-la-casa', name: 'Pepperoni de la Casa', category: 'special', price: 17900, imageUrl: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=800&q=85', ingredients: 'Pepperoni, mozzarella, tomate, orégano, pimentón dulce', sortOrder: 3 },
-  { slug: 'parma-nocturna', name: 'Parma Nocturna', category: 'special', price: 19500, imageUrl: 'https://images.unsplash.com/photo-1594007654729-407eedc4be65?auto=format&fit=crop&w=800&q=85', ingredients: 'Prosciutto, rúcula, parmesano, miel de higos, mozzarella', sortOrder: 4 },
-  { slug: 'jardin-de-la-casa', name: 'Jardín de la Casa', category: 'vegetarian', price: 16800, imageUrl: 'https://images.unsplash.com/photo-1571997478779-2adcbbe9ab2f?auto=format&fit=crop&w=800&q=85', ingredients: 'Zucchini, champiñones, rúcula, tomate, mozzarella', sortOrder: 5 },
-  { slug: 'calabresa-picante', name: 'Calabresa Picante', category: 'special', price: 18400, imageUrl: 'https://images.unsplash.com/photo-1590947132387-155cc02f3212?auto=format&fit=crop&w=800&q=85', ingredients: 'Salame picante, chili en aceite, mozzarella, orégano', sortOrder: 6 },
+  { slug: 'nocturna-margherita', name: 'Margherita', category: 'classic', price: 15500, imageUrl: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=800&q=85', ingredients: 'Masa casa, mozzarella, tomate, albahaca, aceite de oliva', sortOrder: 1 },
+  { slug: 'napoles-tradicional', name: 'Napolitana', category: 'classic', price: 17200, imageUrl: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=800&q=85', ingredients: 'Masa napolitana, tomate San Marzano, mozzarella, orégano', sortOrder: 2 },
+  { slug: 'pepperoni-de-la-casa', name: 'Pepperoni', category: 'special', price: 17900, imageUrl: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=800&q=85', ingredients: 'Pepperoni, mozzarella, tomate, orégano, pimentón dulce', sortOrder: 3 },
+  { slug: 'parma-nocturna', name: 'Jamón y Rúcula', category: 'special', price: 19500, imageUrl: 'https://images.unsplash.com/photo-1594007654729-407eedc4be65?auto=format&fit=crop&w=800&q=85', ingredients: 'Prosciutto, rúcula, parmesano, miel de higos, mozzarella', sortOrder: 4 },
+  { slug: 'jardin-de-la-casa', name: 'Vegetariana', category: 'vegetarian', price: 16800, imageUrl: 'https://images.unsplash.com/photo-1571997478779-2adcbbe9ab2f?auto=format&fit=crop&w=800&q=85', ingredients: 'Zucchini, champiñones, rúcula, tomate, mozzarella', sortOrder: 5 },
+  { slug: 'calabresa-picante', name: 'Calabresa', category: 'special', price: 18400, imageUrl: 'https://images.unsplash.com/photo-1590947132387-155cc02f3212?auto=format&fit=crop&w=800&q=85', ingredients: 'Salame picante, chili en aceite, mozzarella, orégano', sortOrder: 6 },
   { slug: 'cuatro-quesos', name: 'Cuatro Quesos', category: 'vegetarian', price: 17500, imageUrl: 'https://images.unsplash.com/photo-1593560708920-61dd98c46a4e?auto=format&fit=crop&w=800&q=85', ingredients: 'Mozzarella, gorgonzola, parmesano, azul, albahaca', sortOrder: 7 },
-  { slug: 'tricot-funghi', name: 'Tricot Funghi', category: 'classic', price: 17000, imageUrl: 'https://images.unsplash.com/photo-1579751626657-72bc17010498?auto=format&fit=crop&w=800&q=85', ingredients: 'Mozzarella, champiñones, jamón cocido, trufa', sortOrder: 8 },
+  { slug: 'tricot-funghi', name: 'Champiñones', category: 'classic', price: 17000, imageUrl: 'https://images.unsplash.com/photo-1579751626657-72bc17010498?auto=format&fit=crop&w=800&q=85', ingredients: 'Mozzarella, champiñones, jamón cocido, trufa', sortOrder: 8 },
 ];
 
 const SEED_FEATURED = new Set([

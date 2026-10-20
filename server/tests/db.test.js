@@ -149,8 +149,8 @@ test('catálogo: categorías y pizzas con los nombres de columna esperados', asy
 
     await pool.query(
       `INSERT INTO pizzas (category_id, slug, name, price, ingredients, is_featured, sort_order)
-       VALUES ($1, 'margherita', 'Nocturna Margherita', 15500, 'Tomate, Mozzarella', TRUE, 1),
-              ($1, 'pepperoni', 'Pepperoni de la Casa', 17900, 'Pepperoni, Orégano', FALSE, 2),
+       VALUES ($1, 'margherita', 'Margherita', 15500, 'Tomate, Mozzarella', TRUE, 1),
+              ($1, 'pepperoni', 'Pepperoni', 17900, 'Pepperoni, Orégano', FALSE, 2),
               ($1, 'oculta', 'Pizza Oculta', 1000, 'Nada', FALSE, 3)`,
       [classicId],
     );
@@ -165,7 +165,7 @@ test('catálogo: categorías y pizzas con los nombres de columna esperados', asy
 
     const todas = await pizzas.list();
     assert.equal(todas.length, 3);
-    assert.equal(todas[0].name, 'Nocturna Margherita');
+    assert.equal(todas[0].name, 'Margherita');
     assert.equal(todas[0].price, 15500);
     assert.equal(todas[0].category, 'classic');
     assert.equal(todas[0].isFeatured, true);
@@ -221,7 +221,7 @@ test('pedidos: total calculado en el servidor, snapshot y rollback', async () =>
     const categoryId = rows[0].id;
 
     await pool.query(
-      `INSERT INTO pizzas (category_id, slug, name, price) VALUES ($1, 'margherita', 'Nocturna Margherita', 15500)`,
+      `INSERT INTO pizzas (category_id, slug, name, price) VALUES ($1, 'margherita', 'Margherita', 15500)`,
       [categoryId],
     );
     const pizza = (await pizzas.list())[0];
@@ -238,7 +238,7 @@ test('pedidos: total calculado en el servidor, snapshot y rollback', async () =>
     assert.equal(creado.order.totalAmount, 31000, 'el total sale del precio en base');
     assert.equal(creado.order.status, 'new');
     assert.match(creado.whatsappUrl, /^https:\/\/wa\.me\/5491128493108\?text=/);
-    assert.match(creado.message, /2x Nocturna Margherita/);
+    assert.match(creado.message, /2x Margherita/);
     assert.match(creado.message, /Total: \$31\.000/);
     assert.match(creado.message, new RegExp(creado.order.orderCode));
 
@@ -289,7 +289,7 @@ test('pedidos: total calculado en el servidor, snapshot y rollback', async () =>
     );
     const detalle = await pedidosAdmin.getById(pedidoIds[0].id);
     assert.equal(detalle.items.length, 1);
-    assert.equal(detalle.items[0].name, 'Nocturna Margherita');
+    assert.equal(detalle.items[0].name, 'Margherita');
     assert.equal(detalle.customerName, 'Juan Pérez');
     assert.equal(detalle.customerPhone, '1128493108');
 
@@ -518,7 +518,7 @@ test('Pase Nocturno: canje descuenta y no deja saldo negativo', async () => {
       memberId: member.id,
       delta: -100,
       kind: 'redemption',
-      note: 'Nocturna Margherita gratis',
+      note: 'Margherita gratis',
     });
     assert.equal(despues, 20);
 

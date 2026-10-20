@@ -38,7 +38,7 @@ export const BENEFITS = [
   {
     key: 'margherita',
     threshold: 100,
-    label: 'Nocturna Margherita gratis',
+    label: 'Margherita gratis',
     description: 'Canjeás los 100 puntos por una pizza.',
   },
   {

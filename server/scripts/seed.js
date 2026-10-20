@@ -13,7 +13,7 @@ const CATEGORIES = [
 const PIZZAS = [
   {
     slug: 'nocturna-margherita',
-    name: 'Nocturna Margherita',
+    name: 'Margherita',
     category: 'classic',
     price: 15500,
     imageUrl:
@@ -23,7 +23,7 @@ const PIZZAS = [
   },
   {
     slug: 'napoles-tradicional',
-    name: 'Nápoles Tradicional',
+    name: 'Napolitana',
     category: 'classic',
     price: 17200,
     imageUrl:
@@ -33,7 +33,7 @@ const PIZZAS = [
   },
   {
     slug: 'pepperoni-de-la-casa',
-    name: 'Pepperoni de la Casa',
+    name: 'Pepperoni',
     category: 'special',
     price: 17900,
     imageUrl:
@@ -43,7 +43,7 @@ const PIZZAS = [
   },
   {
     slug: 'parma-nocturna',
-    name: 'Parma Nocturna',
+    name: 'Jamón y Rúcula',
     category: 'special',
     price: 19500,
     imageUrl:
@@ -53,7 +53,7 @@ const PIZZAS = [
   },
   {
     slug: 'jardin-de-la-casa',
-    name: 'Jardín de la Casa',
+    name: 'Vegetariana',
     category: 'vegetarian',
     price: 16800,
     imageUrl:
@@ -63,7 +63,7 @@ const PIZZAS = [
   },
   {
     slug: 'calabresa-picante',
-    name: 'Calabresa Picante',
+    name: 'Calabresa',
     category: 'special',
     price: 18400,
     imageUrl:
@@ -83,7 +83,7 @@ const PIZZAS = [
   },
   {
     slug: 'tricot-funghi',
-    name: 'Tricot Funghi',
+    name: 'Champiñones',
     category: 'classic',
     price: 17000,
     imageUrl:
