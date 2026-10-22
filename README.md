@@ -1,23 +1,30 @@
 # Nocturna Pizza
 
-Sitio de Nocturna Pizza con backend propio, login con Google y un asistente virtual.
+Sitio de Nocturna Pizza con backend propio, frontend estático y base de datos
+opcional. El login con Google también es opcional.
 
 - **Frontend:** estático, en `public/` (HTML + módulos ES, sin bundler).
 - **Backend:** un solo archivo, `server.js`, sobre `node:http`. Sirve el frontend y la API.
-- **Base de datos:** Supabase Postgres (cliente `pg`).
-- **Login:** Supabase Auth con Google, para clientes y para el panel.
-- **Asistente:** OpenAI (Chat Completions), con la key solo en el servidor.
+- **Base de datos (opcional):** Supabase Postgres (cliente `pg`).
+- **Login (opcional):** Supabase Auth con Google, para clientes y para el panel.
+- **Asistente virtual:** RAG local sobre `docs/`; con `OPENAI_API_KEY` responde
+  con IA y, sin key, sigue funcionando en modo información.
 - **Deploy:** un único servicio en Render, que sirve todo.
+
+> **Modo estático:** si no configurás `DATABASE_URL`, el sitio arranca igual.
+> Las funciones que necesitan base (pedidos, contacto, Pase y panel) quedan
+> deshabilitadas. El chatbot no usa la base.
 
 ```
 .
 ├── server.js            # backend completo (config, API, estáticos, migraciones, seed)
 ├── package.json         # pg + dotenv + zod
 ├── .env.example         # plantilla de variables (esta SÍ se sube)
+├── docs/                # notas del negocio (negocio.md, menu.md)
 ├── public/              # frontend servido por server.js
 │   ├── index.html  menu.html  contacto.html
 │   ├── styles.css  script.js  favicon.svg
-│   ├── js/              # api.js, pase.js, pase-ui.js, asistente, etc.
+│   ├── js/              # api.js, pase.js, pase-ui.js, etc.
 │   └── admin/           # panel privado (index, mensajes, socios, login)
 └── server/              # backend viejo (Fastify). Queda solo como referencia.
 ```
@@ -36,16 +43,23 @@ npm install
 cp .env.example .env      # en Windows: copy .env.example .env
 ```
 
-Completá `.env` (ver la sección 3). Después:
+Completá `.env` (ver la sección 2). Después:
 
 ```bash
-npm run migrate           # crea/actualiza el esquema en Supabase (idempotente)
-npm run seed              # carga categorías, pizzas y un socio demo
 npm start                 # http://localhost:3000
 ```
 
 Abrí **http://localhost:3000**. El mismo servidor entrega el sitio y la API, así
-que no hay CORS ni URLs de API hardcodeadas.
+que no hay CORS ni URLs de API hardcodeadas. El sitio funciona sin base; las
+funciones que la necesitan devuelven `503`.
+
+Si además querés el sitio completo (menú dinámico, pedidos, Pase y panel),
+completá `DATABASE_URL` y corré una vez:
+
+```bash
+npm run migrate           # crea/actualiza el esquema (idempotente)
+npm run seed              # carga categorías, pizzas y un socio demo
+```
 
 Comandos:
 
@@ -53,11 +67,12 @@ Comandos:
 |---|---|
 | `npm start` | Arranca el servidor |
 | `npm run dev` | Arranca con recarga al guardar (`node --watch`) |
-| `npm run migrate` | Aplica el esquema (seguro de correr varias veces) |
-| `npm run seed` | Carga el menú y el socio demo |
+| `npm run migrate` | Aplica el esquema en la base (solo si usás DB) |
+| `npm run seed` | Carga el menú y el socio demo (solo si usás DB) |
+| `npm run rag:index` | Genera `data/knowledge.json` para el asistente (requiere `OPENAI_API_KEY`) |
 
-Si faltan las credenciales de Supabase o de OpenAI, el servidor arranca igual y
-lo avisa por consola: el sitio y el menú funcionan, el login y el asistente no.
+Si falta `DATABASE_URL`, el sitio funciona en modo estático y las rutas que
+necesitan base devuelven `503`.
 
 ---
 
@@ -72,13 +87,14 @@ Todas viven en `.env` en la raíz. En Render se cargan a mano en **Environment**
 | `PUBLIC_SITE_URL` | URL pública del sitio (se usa en mensajes). |
 | `ADMIN_WHATSAPP` | WhatsApp del local, solo dígitos. |
 | `ADMIN_EMAILS` | Emails con acceso al panel, separados por coma. |
-| `DATABASE_URL` | Postgres para la app (pooler *transaction*, puerto 6543). |
-| `DATABASE_MIGRATION_URL` | Postgres para migrar (pooler *session*, puerto 5432). |
-| `SUPABASE_URL` | URL del proyecto Supabase. |
-| `SUPABASE_ANON_KEY` | Key pública (viaja al navegador vía `/api/config`). |
-| `SUPABASE_SERVICE_ROLE_KEY` | Key secreta (no se usa en el navegador). |
-| `OPENAI_API_KEY` | Key del asistente. |
-| `OPENAI_MODEL` | Modelo (default `gpt-4o-mini`). |
+| `DATABASE_URL` | Postgres para la app. **Opcional:** si está vacío, modo estático. |
+| `DATABASE_MIGRATION_URL` | Postgres para migrar. Opcional, solo con DB. |
+| `SUPABASE_URL` | URL del proyecto Supabase. Opcional, solo para login. |
+| `SUPABASE_ANON_KEY` | Key pública (viaja al navegador vía `/api/config`). Opcional. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Key secreta (no se usa en el navegador). Opcional. |
+| `OPENAI_API_KEY` | Key de OpenAI para el asistente con IA. Opcional. |
+| `OPENAI_MODEL` | Modelo de chat. Default: `gpt-4o-mini`. |
+| `OPENAI_EMBEDDING_MODEL` | Modelo de embeddings. Default: `text-embedding-3-small`. |
 
 ---
 
@@ -88,14 +104,14 @@ Públicas:
 
 ```
 GET  /api/health
-GET  /api/config                      → config pública (Supabase URL/anon key)
+GET  /api/config                      → config pública (Supabase URL/anon key + chatbot)
+POST /api/assistant                   → pregunta al chatbot (RAG sobre docs/)
 GET  /api/categories
 GET  /api/pizzas?category=&featured=&available=
 GET  /api/pizzas/:slug
 POST /api/orders                      → guarda el pedido y devuelve el link de WhatsApp
 GET  /api/orders/:code                → solo estado; no expone datos del cliente
 POST /api/messages
-POST /api/assistant                   → asistente virtual
 ```
 
 Con sesión (header `Authorization: Bearer <access_token>`):
@@ -186,10 +202,21 @@ El `seed` crea un socio de ejemplo, `#SOCIO-DEMO1` con 65 puntos.
 
 ## 6. Asistente virtual
 
-`POST /api/assistant` recibe la conversación y responde con OpenAI. El servidor
-inyecta el menú real en el prompt del sistema y, si el mensaje trae un código
-`NP-XXXXX`, consulta el estado real del pedido. El widget del frontend
-(`public/js/assistant.js`) solo aparece si el asistente está configurado.
+El botón de chat aparece sobre el de WhatsApp en `index.html`, `menu.html` y
+`contacto.html`. No usa Supabase ni la base de datos: busca en los documentos de
+`docs/` (`menu.md` y `negocio.md`).
+
+- **Sin `OPENAI_API_KEY`:** responde en modo información, con los datos de los
+  documentos. Sirve para menú, precios, cómo pedir y Pase Nocturno. Si un dato
+  figura como `[COMPLETAR]`, lo deriva a WhatsApp.
+- **Con `OPENAI_API_KEY`:** usa RAG. Para mejorar la búsqueda semántica, corré
+  una vez `npm run rag:index`. El índice queda en `data/knowledge.json`
+  (ignorado por Git).
+- Si OpenAI falla o no tiene saldo, el backend vuelve automáticamente al modo
+  información en vez de romper el chat.
+
+Para actualizar las respuestas, editá `docs/menu.md` o `docs/negocio.md`. Si ya
+tenés un índice generado, volvé a correr `npm run rag:index`.
 
 ---
 
@@ -204,13 +231,16 @@ Un **Web Service** conectado al repo de GitHub:
 | Start Command | `npm start` |
 | Health Check Path | `/api/health` |
 
-Variables en el panel de Render: cargá todas las de la sección 2 con
-`NODE_ENV=production` y `PUBLIC_SITE_URL` apuntando a la URL del servicio.
+Variables en el panel de Render: cargá `NODE_ENV=production` y
+`PUBLIC_SITE_URL` apuntando a la URL del servicio. Las de base y Supabase son
+opcionales según qué funciones quieras usar.
 
-Las migraciones se corren una vez desde tu máquina (`npm run migrate`) apuntando
-a la base de Supabase, o como *Pre-deploy Command* (`npm run migrate`).
+Si usás base de datos, corré las migraciones una vez (`npm run migrate`) y el
+seed (`npm run seed`).
 
-### Supabase
+### Supabase (opcional)
+
+Solo hace falta si querés login con Google, Pase Nocturno o panel.
 
 1. Crear el proyecto.
 2. **Settings → Database → Connect**: copiar la connection string. `DATABASE_URL`

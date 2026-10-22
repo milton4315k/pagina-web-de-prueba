@@ -1,4 +1,4 @@
-// Para levantar Postgres localmente.
+// Para levantar Postgres localmente (opcional: el chatbot no lo necesita).
 // Uso: docker compose up -d   y después   npm run migrate   &&   npm run seed
 
 services:

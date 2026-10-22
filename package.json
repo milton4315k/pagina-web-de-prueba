@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "private": true,
   "type": "module",
-  "description": "Nocturna Pizza: backend único (server.js) + frontend estático en public/. Supabase (Postgres + Auth con Google) y OpenAI.",
+  "description": "Nocturna Pizza: backend único (server.js) + frontend estático en public/. Supabase opcional para base de datos y login, y asistente virtual con RAG local.",
   "engines": {
     "node": ">=20"
   },
@@ -11,7 +11,8 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "migrate": "node server.js migrate",
-    "seed": "node server.js seed"
+    "seed": "node server.js seed",
+    "rag:index": "node server.js rag:index"
   },
   "dependencies": {
     "dotenv": "^16.4.7",

@@ -3,10 +3,9 @@
  *
  * Qué hace:
  *   - Sirve el frontend estático que vive en public/.
- *   - Expone la API en /api/* contra Supabase Postgres (cliente pg).
+ *   - Expone la API en /api/* contra Postgres (opcional; cliente pg).
  *   - Maneja el login con Google vía Supabase Auth (verifica el JWT de Supabase).
  *   - Da acceso al panel solo a los emails de ADMIN_EMAILS.
- *   - Expone un asistente que usa la API de OpenAI.
  *
  * Modos:
  *   node server.js            -> arranca el servidor
@@ -14,6 +13,8 @@
  *   node server.js seed       -> carga categorías y pizzas del menú
  *
  * Dependencias: pg, dotenv, zod. El resto es Node nativo (node:http, fetch).
+ * La base (Supabase/Postgres) es opcional para el resto de las funciones
+ * (pedidos, Pase, panel).
  */
 
 import 'dotenv/config';
@@ -40,8 +41,6 @@ const DEV_DEFAULTS = IS_PROD
   ? {}
   : {
       PORT: '3000',
-      DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/nocturna',
-      DATABASE_MIGRATION_URL: 'postgresql://postgres:postgres@localhost:5432/nocturna',
       ADMIN_WHATSAPP: '5491128493108',
       PUBLIC_SITE_URL: 'http://localhost:3000',
       ADMIN_EMAILS: '',
@@ -69,16 +68,38 @@ const env = {
   SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY ?? '',
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ?? '',
   OPENAI_API_KEY: process.env.OPENAI_API_KEY ?? '',
-  OPENAI_MODEL: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
+  OPENAI_MODEL: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+  OPENAI_EMBEDDING_MODEL: process.env.OPENAI_EMBEDDING_MODEL || 'text-embedding-3-small',
 };
 
-if (!env.DATABASE_URL) {
-  console.error('[config] Falta DATABASE_URL. Copiá .env.example a .env y completalo.');
-  process.exit(1);
+// Los valores de ejemplo (.env.example) no cuentan como configuración real.
+const looksLikePlaceholder = (value, markers) =>
+  Boolean(value) && markers.some((marker) => String(value).includes(marker));
+
+const dbPlaceholder = looksLikePlaceholder(env.DATABASE_URL, [
+  'TU_REF',
+  'TU_PASSWORD',
+  'TU_REGION',
+]);
+const dbEnabled = Boolean(env.DATABASE_URL) && !dbPlaceholder;
+
+if (!dbEnabled) {
+  console.warn(
+    dbPlaceholder
+      ? '[config] DATABASE_URL tiene datos de ejemplo. Se ignora: modo estático.'
+      : '[config] DATABASE_URL vacío: modo estático. El sitio funciona; ' +
+          'pedidos, contacto, Pase y panel quedan deshabilitados.',
+  );
 }
 
-const supabaseAuthReady = () => Boolean(env.SUPABASE_URL && env.SUPABASE_ANON_KEY);
-const openaiReady = () => Boolean(env.OPENAI_API_KEY);
+const supabaseAuthReady = () =>
+  Boolean(env.SUPABASE_URL && env.SUPABASE_ANON_KEY) &&
+  !looksLikePlaceholder(env.SUPABASE_URL, ['TU_REF']) &&
+  !looksLikePlaceholder(env.SUPABASE_ANON_KEY, ['TU_ANON_KEY']);
+
+const openaiReady = () =>
+  Boolean(env.OPENAI_API_KEY) &&
+  !looksLikePlaceholder(env.OPENAI_API_KEY, ['TU_API_KEY', 'sk-...']);
 
 // ============================================================
 // 2. Base de datos
@@ -87,18 +108,33 @@ const openaiReady = () => Boolean(env.OPENAI_API_KEY);
 const isLocalDb = /(^|\/\/)(localhost|127\.0\.0\.1)/.test(env.DATABASE_URL);
 const ssl = isLocalDb ? undefined : { rejectUnauthorized: false };
 
-const pool = new pg.Pool({
-  connectionString: env.DATABASE_URL,
-  max: 8,
-  idleTimeoutMillis: 30_000,
-  connectionTimeoutMillis: 8_000,
-  statement_timeout: 15_000,
-  ssl,
-});
+// Sin DATABASE_URL igual arrancamos: el asistente usa un índice local y el
+// resto del sitio queda como estaba. Las rutas que necesitan base devuelven
+// 503 en vez de tumbar el proceso.
+const pool = dbEnabled
+  ? new pg.Pool({
+      connectionString: env.DATABASE_URL,
+      max: 8,
+      idleTimeoutMillis: 30_000,
+      connectionTimeoutMillis: 8_000,
+      statement_timeout: 15_000,
+      ssl,
+    })
+  : {
+      query: async () => {
+        throw new HttpError(503, 'database_unavailable', 'Esta función necesita una base de datos.');
+      },
+      connect: async () => {
+        throw new HttpError(503, 'database_unavailable', 'Esta función necesita una base de datos.');
+      },
+      end: async () => {},
+    };
 
-pool.on('error', (error) => {
-  console.error('[db] error en cliente ocioso:', error.message);
-});
+if (dbEnabled) {
+  pool.on('error', (error) => {
+    console.error('[db] error en cliente ocioso:', error.message);
+  });
+}
 
 /** Ejecuta `fn` con un cliente dedicado dentro de una transacción. */
 async function withTransaction(fn) {
@@ -442,18 +478,6 @@ const memberListQuerySchema = z.object({
   search: z.string().trim().max(120).optional(),
   minPoints: z.coerce.number().int().min(0).optional(),
   sort: z.enum(['points', 'newest', 'birthday']).default('points'),
-});
-
-const assistantSchema = z.object({
-  messages: z
-    .array(
-      z.object({
-        role: z.enum(['user', 'assistant']),
-        content: z.string().trim().min(1).max(1500),
-      }),
-    )
-    .min(1)
-    .max(20),
 });
 
 // ============================================================
@@ -1362,6 +1386,468 @@ async function readJsonBody(req) {
 }
 
 // ============================================================
+// 10.5 Asistente (RAG local, sin base de datos)
+// ============================================================
+
+const DOCS_DIR = path.join(__dirname, 'docs');
+const DATA_DIR = path.join(__dirname, 'data');
+const KNOWLEDGE_INDEX = path.join(DATA_DIR, 'knowledge.json');
+const ASSISTANT_MODEL = env.OPENAI_MODEL;
+const EMBEDDING_MODEL = env.OPENAI_EMBEDDING_MODEL;
+const OPENAI_BASE = 'https://api.openai.com/v1';
+const WHATSAPP_HUMAN = '+54 9 11 2849-3108';
+
+const assistantSchema = z.object({
+  messages: z
+    .array(
+      z.object({
+        role: z.enum(['user', 'assistant']),
+        content: z.string().trim().min(1).max(2000),
+      }),
+    )
+    .min(1)
+    .max(12),
+});
+
+function markdownChunks(text, source, maxLength = 1300) {
+  const clean = String(text ?? '').replace(/\r\n/g, '\n').trim();
+  if (!clean) return [];
+
+  const sections = clean.split(/\n(?=#{1,3}\s)/g);
+  const chunks = [];
+
+  for (const section of sections) {
+    const trimmed = section.trim();
+    if (!trimmed) continue;
+
+    if (trimmed.length <= maxLength) {
+      chunks.push({ source, text: trimmed });
+      continue;
+    }
+
+    const paragraphs = trimmed.split(/\n{2,}/);
+    let current = '';
+    for (const paragraph of paragraphs) {
+      if (!paragraph.trim()) continue;
+      if (current && current.length + paragraph.length + 2 > maxLength) {
+        chunks.push({ source, text: current.trim() });
+        current = '';
+      }
+      if (paragraph.length > maxLength) {
+        for (let index = 0; index < paragraph.length; index += maxLength) {
+          chunks.push({ source, text: paragraph.slice(index, index + maxLength).trim() });
+        }
+      } else {
+        current += (current ? '\n\n' : '') + paragraph;
+      }
+    }
+    if (current.trim()) chunks.push({ source, text: current.trim() });
+  }
+
+  return chunks;
+}
+
+async function readKnowledgeDocs() {
+  let entries;
+  try {
+    entries = await fsp.readdir(DOCS_DIR, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+
+  const files = entries
+    .filter((entry) => entry.isFile() && entry.name.toLowerCase().endsWith('.md'))
+    .map((entry) => entry.name)
+    .sort();
+
+  const docs = [];
+  for (const file of files) {
+    try {
+      const text = await fsp.readFile(path.join(DOCS_DIR, file), 'utf8');
+      docs.push({ source: file, text, chunks: markdownChunks(text, file) });
+    } catch (error) {
+      console.error(`[rag] No se pudo leer ${file}:`, error.message);
+    }
+  }
+  return docs;
+}
+
+function normalizeText(value) {
+  return String(value ?? '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+const STOPWORDS = new Set([
+  'a', 'al', 'algo', 'algun', 'alguna', 'ante', 'como', 'con', 'cual', 'cuando',
+  'de', 'del', 'desde', 'donde', 'dos', 'el', 'ella', 'en', 'entre', 'era', 'es',
+  'esa', 'ese', 'eso', 'esta', 'este', 'esto', 'fue', 'ha', 'hace', 'hasta', 'hay',
+  'la', 'las', 'le', 'les', 'lo', 'los', 'mas', 'me', 'mi', 'muy', 'no', 'nos',
+  'o', 'para', 'pero', 'por', 'que', 'se', 'ser', 'si', 'sin', 'sobre', 'son',
+  'su', 'sus', 'te', 'tiene', 'tu', 'un', 'una', 'uno', 'y', 'ya',
+]);
+
+function wordsOf(value) {
+  return normalizeText(value)
+    .match(/[a-z0-9]+/g)
+    ?.filter((word) => word.length > 2 && !STOPWORDS.has(word)) ?? [];
+}
+
+function keywordScore(question, text) {
+  const queryWords = [...new Set(wordsOf(question))];
+  if (!queryWords.length) return 0;
+  const normalized = normalizeText(text);
+  let score = 0;
+  for (const word of queryWords) {
+    if (normalized.includes(word)) score += word.length >= 6 ? 2 : 1;
+  }
+  return score;
+}
+
+async function callOpenAI(endpoint, payload, timeoutMs = 45_000) {
+  if (!openaiReady()) {
+    const error = new Error('OpenAI no está configurado.');
+    error.code = 'assistant_unconfigured';
+    throw error;
+  }
+
+  let response;
+  try {
+    response = await fetch(`${OPENAI_BASE}${endpoint}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${env.OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+  } catch (error) {
+    console.error(`[openai] no se pudo conectar (${endpoint}):`, error.message);
+    throw error;
+  }
+
+  const raw = await response.text();
+  let data = null;
+  try {
+    data = raw ? JSON.parse(raw) : {};
+  } catch {
+    data = { raw };
+  }
+
+  if (!response.ok) {
+    const apiError = data?.error ?? {};
+    const error = new Error(apiError.message || `OpenAI respondió ${response.status}.`);
+    error.status = response.status;
+    error.code = apiError.code || apiError.type || 'openai_error';
+    console.error(`[openai] error ${response.status}`, raw.slice(0, 800));
+    throw error;
+  }
+
+  return data;
+}
+
+async function embedTexts(texts) {
+  const all = [];
+  const batchSize = 64;
+
+  for (let index = 0; index < texts.length; index += batchSize) {
+    const batch = texts.slice(index, index + batchSize);
+    const data = await callOpenAI('/embeddings', {
+      model: EMBEDDING_MODEL,
+      input: batch,
+    });
+    const vectors = (data.data ?? [])
+      .slice()
+      .sort((a, b) => a.index - b.index)
+      .map((item) => item.embedding);
+    if (vectors.length !== batch.length || vectors.some((vector) => !Array.isArray(vector))) {
+      throw new Error('OpenAI devolvió embeddings incompletos.');
+    }
+    all.push(...vectors);
+  }
+
+  return all;
+}
+
+async function buildKnowledgeIndex() {
+  if (!openaiReady()) {
+    throw new Error('Falta OPENAI_API_KEY. Configurala en .env para indexar los documentos.');
+  }
+
+  console.log('[rag] Leyendo documentos…');
+  const docs = await readKnowledgeDocs();
+  const chunks = docs.flatMap((doc) => doc.chunks);
+  if (!chunks.length) throw new Error('No encontré documentos .md en docs/.');
+
+  for (const doc of docs) {
+    console.log(`  ✓ ${doc.source}: ${doc.chunks.length} fragmentos`);
+  }
+
+  console.log(`[rag] Embebiendo ${chunks.length} fragmentos con ${EMBEDDING_MODEL}…`);
+  const embeddings = await embedTexts(chunks.map((chunk) => chunk.text));
+
+  const payload = {
+    version: 1,
+    model: EMBEDDING_MODEL,
+    createdAt: new Date().toISOString(),
+    chunks: chunks.map((chunk, index) => ({
+      id: `${chunk.source}#${index + 1}`,
+      source: chunk.source,
+      text: chunk.text,
+      embedding: embeddings[index],
+    })),
+  };
+
+  await fsp.mkdir(DATA_DIR, { recursive: true });
+  await fsp.writeFile(KNOWLEDGE_INDEX, `${JSON.stringify(payload)}\n`, 'utf8');
+  console.log(`[rag] Índice listo: ${KNOWLEDGE_INDEX} (${chunks.length} fragmentos)`);
+  return payload;
+}
+
+let knowledgeCache = { mtimeMs: 0, data: null };
+
+async function loadKnowledgeIndex() {
+  try {
+    const stat = await fsp.stat(KNOWLEDGE_INDEX);
+    if (knowledgeCache.data && knowledgeCache.mtimeMs === stat.mtimeMs) {
+      return knowledgeCache.data;
+    }
+    const text = await fsp.readFile(KNOWLEDGE_INDEX, 'utf8');
+    const data = JSON.parse(text);
+    if (!Array.isArray(data?.chunks)) return null;
+    knowledgeCache = { mtimeMs: stat.mtimeMs, data };
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+function cosineSimilarity(a, b) {
+  if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return 0;
+  let dot = 0;
+  let normA = 0;
+  let normB = 0;
+  for (let index = 0; index < a.length; index += 1) {
+    dot += a[index] * b[index];
+    normA += a[index] * a[index];
+    normB += b[index] * b[index];
+  }
+  if (!normA || !normB) return 0;
+  return dot / (Math.sqrt(normA) * Math.sqrt(normB));
+}
+
+async function retrieveKnowledge(question) {
+  const index = await loadKnowledgeIndex();
+
+  if (index && index.model === EMBEDDING_MODEL) {
+    try {
+      const [queryVector] = await embedTexts([question]);
+      const ranked = index.chunks
+        .map((chunk) => ({
+          source: chunk.source,
+          text: chunk.text,
+          score: cosineSimilarity(queryVector, chunk.embedding),
+        }))
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 5)
+        .filter((chunk) => chunk.score > 0.18);
+
+      if (ranked.length) {
+        return {
+          mode: 'index',
+          chunks: ranked,
+          context: ranked.map((chunk) => `[${chunk.source}]\n${chunk.text}`).join('\n\n---\n\n').slice(0, 14_000),
+          sources: [...new Set(ranked.map((chunk) => chunk.source))],
+        };
+      }
+    } catch (error) {
+      console.error('[rag] Búsqueda semántica no disponible:', error.message);
+    }
+  }
+
+  const docs = await readKnowledgeDocs();
+  const chunks = docs.flatMap((doc) => doc.chunks);
+  const ranked = chunks
+    .map((chunk) => ({ ...chunk, score: keywordScore(question, chunk.text) }))
+    .filter((chunk) => chunk.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5);
+
+  const selected = ranked.length ? ranked : chunks.slice(0, 5);
+  return {
+    mode: 'docs',
+    chunks: selected,
+    context: selected.map((chunk) => `[${chunk.source}]\n${chunk.text}`).join('\n\n---\n\n').slice(0, 14_000),
+    sources: [...new Set(selected.map((chunk) => chunk.source))],
+  };
+}
+
+function cleanForLocalAnswer(text) {
+  return String(text ?? '')
+    .replace(/\r\n/g, '\n')
+    .split('\n')
+    .filter((line) => !line.includes('[COMPLETAR'))
+    .join('\n')
+    .replace(/^>\s?/gm, '')
+    .replace(/^Precios de referencia del negocio\..*$/gm, '')
+    .replace(/^actualizalo también acá\.\s*$/gm, '')
+    .replace(/^#{1,6}\s*(.+)$/gm, '$1:')
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/^Extras y bebidas:\s*$/gm, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+function sectionFromDoc(text, heading) {
+  const pattern = new RegExp(`(?:^|\\n)(#{2,3}\\s+${heading}[^\\n]*\\n[\\s\\S]*?)(?=\\n#{1,3}\\s|$)`, 'i');
+  return pattern.exec(text)?.[1]?.trim() ?? '';
+}
+
+const PIZZA_WORDS = [
+  'margherita', 'napolitana', 'pepperoni', 'jamon', 'rucula', 'vegetariana',
+  'calabresa', 'quesos', 'champinones', 'pizza', 'pizzas', 'menu', 'precio',
+  'precios', 'carta',
+];
+
+async function localAnswer(question) {
+  const docs = await readKnowledgeDocs();
+  const normalized = normalizeText(question);
+  const menuDoc = docs.find((doc) => doc.source === 'menu.md');
+  const businessDoc = docs.find((doc) => doc.source === 'negocio.md');
+  const businessText = businessDoc?.text ?? '';
+
+  let answer = '';
+  let pending = false;
+
+  const hasDetails = (value) =>
+    String(value)
+      .split('\n')
+      .some((line) => {
+        const text = line.trim();
+        return text.length > 10 && !text.endsWith(':');
+      });
+
+  const section = (heading) => {
+    const cleaned = cleanForLocalAnswer(sectionFromDoc(businessText, heading));
+    if (hasDetails(cleaned)) return cleaned;
+    pending = true;
+    return '';
+  };
+
+  if (PIZZA_WORDS.some((word) => normalized.includes(word))) {
+    answer = cleanForLocalAnswer(menuDoc?.text ?? '');
+  } else if (/\b(horario|horarios|abren|abierto|cierran|cerrado|hora)\b/.test(normalized)) {
+    answer = section('Horarios de atención');
+  } else if (/\b(pase|puntos|beneficio|beneficios|canje|cumpleanos)\b/.test(normalized)) {
+    answer = section('Pase Nocturno');
+  } else if (/\b(delivery|envio|domicilio|zona|reparto|demora)\b/.test(normalized)) {
+    answer = section('Entrega a domicilio');
+  } else if (/\b(pago|pagos|efectivo|transferencia|tarjeta|mercado pago)\b/.test(normalized)) {
+    answer = section('Formas de pago');
+  } else if (/\b(pedir|pedido|comprar|encargar)\b/.test(normalized)) {
+    answer = section('Cómo pedir');
+  } else if (/\b(contacto|whatsapp|direccion|local|retiro|ubicacion)\b/.test(normalized)) {
+    const contact = section('Contacto');
+    const pickup = section('Retiro en el local');
+    answer = [pickup, contact].filter(Boolean).join('\n\n');
+  }
+
+  if (!answer) {
+    if (pending) {
+      answer = 'No tengo ese dato confirmado en la información cargada de la web.';
+    } else {
+      const ranked = docs
+        .flatMap((doc) => doc.chunks)
+        .map((chunk) => ({ ...chunk, score: keywordScore(question, chunk.text) }))
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 2)
+        .filter((chunk) => chunk.score > 0);
+
+      answer = ranked.length
+        ? ranked.map((chunk) => cleanForLocalAnswer(chunk.text)).join('\n\n')
+        : 'Todavía no tengo ese dato cargado.';
+    }
+  }
+
+  const prefix = 'Te comparto la información que tengo del local:';
+  const suffix = `Para confirmar disponibilidad, total y demora, escribí por WhatsApp al ${WHATSAPP_HUMAN}.`;
+  const reply = `${prefix}\n\n${answer}\n\n${suffix}`;
+
+  return {
+    reply: reply.slice(0, 5000),
+    sources: [...new Set(docs.map((doc) => doc.source))],
+  };
+}
+
+function buildAssistantPrompt(context) {
+  return [
+    'Sos el asistente virtual de Nocturna Pizza, una pizzería de barrio.',
+    'Respondé siempre en español rioplatense, de forma amable, breve y concreta.',
+    'Usá únicamente la información del CONTEXTO para hablar de menú, precios, horarios,',
+    'delivery, pagos, Pase Nocturno y contacto.',
+    'Nunca inventes precios, horarios, direcciones, promociones ni disponibilidad.',
+    'Si el dato no está en el contexto o figura como pendiente, decí que no lo tenés',
+    `confirmado y sugerí escribir por WhatsApp al ${WHATSAPP_HUMAN}.`,
+    'No tomes pedidos, no pidas datos de tarjeta y no prometas demoras exactas.',
+    'No menciones que usás un contexto ni hables de bases de datos o tecnología.',
+    'Podés recomendar pizzas del menú y explicar cómo pedir.',
+    '',
+    'CONTEXTO:',
+    context || '(No hay documentos disponibles. Derivá la consulta a WhatsApp.)',
+  ].join('\n');
+}
+
+async function askAssistant(messages) {
+  const lastUser = [...messages].reverse().find((message) => message.role === 'user');
+  if (!lastUser) throw badRequest('Falta tu pregunta.');
+
+  if (!openaiReady()) {
+    const fallback = await localAnswer(lastUser.content);
+    return {
+      ...fallback,
+      mode: 'local',
+      notice: 'Respondo con la información cargada del local.',
+    };
+  }
+
+  const knowledge = await retrieveKnowledge(lastUser.content);
+
+  try {
+    const data = await callOpenAI('/chat/completions', {
+      model: ASSISTANT_MODEL,
+      temperature: 0.35,
+      max_tokens: 600,
+      messages: [
+        { role: 'system', content: buildAssistantPrompt(knowledge.context) },
+        ...messages.slice(-10).map((message) => ({
+          role: message.role,
+          content: message.content,
+        })),
+      ],
+    });
+
+    const reply = data?.choices?.[0]?.message?.content?.trim();
+    if (!reply) throw new Error('OpenAI devolvió una respuesta vacía.');
+
+    return {
+      reply,
+      sources: knowledge.sources,
+      mode: 'ai',
+    };
+  } catch (error) {
+    console.error('[assistant] La IA no respondió:', error.message);
+    const fallback = await localAnswer(lastUser.content);
+    return {
+      ...fallback,
+      mode: 'local',
+      notice: 'La IA no está disponible en este momento. Respondo con la información del local.',
+    };
+  }
+}
+
+// ============================================================
 // 11. Rutas de la API
 // ============================================================
 
@@ -1379,13 +1865,31 @@ route('GET', '/api/health', async () => {
 
 // --- Config pública para el frontend --------------------------
 
-route('GET', '/api/config', async () => ({
-  supabaseUrl: env.SUPABASE_URL || null,
-  supabaseAnonKey: env.SUPABASE_ANON_KEY || null,
-  whatsappNumber: env.ADMIN_WHATSAPP,
-  loyaltyRules: { welcomePoints: RULES.welcomePoints, pointsPerPeso: RULES.pointsPerPeso },
-  assistantEnabled: openaiReady(),
-}));
+route('GET', '/api/config', async () => {
+  const authReady = supabaseAuthReady();
+  return {
+    supabaseUrl: authReady ? env.SUPABASE_URL : null,
+    supabaseAnonKey: authReady ? env.SUPABASE_ANON_KEY : null,
+    whatsappNumber: env.ADMIN_WHATSAPP,
+    loyaltyRules: { welcomePoints: RULES.welcomePoints, pointsPerPeso: RULES.pointsPerPeso },
+    assistantEnabled: openaiReady() || fs.existsSync(DOCS_DIR),
+  };
+});
+
+// --- Asistente virtual ---------------------------------------
+
+route(
+  'POST',
+  '/api/assistant',
+  async ({ body }) => {
+    const parsed = parseWith(assistantSchema, body);
+    if (parsed.messages.at(-1)?.role !== 'user') {
+      throw badRequest('El último mensaje tiene que ser una pregunta.');
+    }
+    return askAssistant(parsed.messages);
+  },
+  { rate: { max: 30, windowMs: 60_000 } },
+);
 
 // --- Catálogo -------------------------------------------------
 
@@ -1507,92 +2011,6 @@ route('POST', '/api/members/request-code', async ({ user }) => {
     memberCode: memberCodeLabel(member.memberCode),
   };
 }, { auth: true, rate: { max: 5, windowMs: 3_600_000 } });
-
-// --- Asistente virtual (OpenAI) -------------------------------
-
-async function askOpenAI(conversation, extraContext = '') {
-  if (!openaiReady()) {
-    throw new HttpError(503, 'assistant_unconfigured', 'El asistente todavía no está configurado.');
-  }
-
-  const pizzas = await listPizzas({ available: true });
-  const menu = pizzas
-    .map((pizza) => `- ${pizza.name} (${pizza.categoryName}): ${formatPrice(pizza.price)}. ${pizza.ingredients}`)
-    .join('\n');
-
-  const system = [
-    'Sos el asistente virtual de Nocturna Pizza, una pizzería. Respondés en español rioplatense,',
-    'cordial y breve (máximo 5 oraciones). Solo hablás de Nocturna Pizza: menú, precios,',
-    'modalidades de pedido (retiro en el local o entrega a domicilio), horarios si te los dan,',
-    'y el Pase Nocturno (programa de puntos). Si te preguntan algo que no sabés, ofrecé',
-    'continuar por WhatsApp. Nunca inventes promociones ni precios que no estén en el menú.',
-    'No pidas ni reveles datos personales de terceros.',
-    '',
-    'Menú disponible:',
-    menu,
-    '',
-    `Para pedidos, el WhatsApp del local es +${env.ADMIN_WHATSAPP}.`,
-    'El Pase Nocturno da 20 puntos de regalo, 1 punto por cada $1.000 gastados, y premios a los 50',
-    'y 100 puntos. El ingreso al Pase es con la cuenta de Google.',
-    extraContext,
-  ]
-    .filter(Boolean)
-    .join('\n');
-
-  const body = {
-    model: env.OPENAI_MODEL,
-    temperature: 0.5,
-    max_tokens: 400,
-    messages: [{ role: 'system', content: system }, ...conversation],
-  };
-
-  let response;
-  try {
-    response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${env.OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify(body),
-    });
-  } catch {
-    throw new HttpError(502, 'assistant_unreachable', 'El asistente no está disponible ahora.');
-  }
-
-  if (!response.ok) {
-    const detail = await response.text();
-    console.error('[openai] error', response.status, detail.slice(0, 300));
-    throw new HttpError(502, 'assistant_error', 'El asistente tuvo un problema. Probá de nuevo.');
-  }
-
-  const data = await response.json();
-  const reply = data.choices?.[0]?.message?.content?.trim();
-  if (!reply) throw new HttpError(502, 'assistant_empty', 'El asistente no devolvió respuesta.');
-  return reply;
-}
-
-route(
-  'POST',
-  '/api/assistant',
-  async ({ body }) => {
-    const { messages } = parseWith(assistantSchema, body);
-
-    // Si el último mensaje trae un código de pedido, le pasamos el estado real.
-    let extra = '';
-    const lastUser = [...messages].reverse().find((msg) => msg.role === 'user');
-    const codeMatch = lastUser?.content.match(/\bNP-[A-Z0-9]{5}\b/i);
-    if (codeMatch) {
-      const status = await getPublicOrderStatus(codeMatch[0].toUpperCase());
-      if (status) extra = `Dato real: el pedido ${status.orderCode} está en estado "${status.status}".`;
-      else extra = `Aviso: no existe un pedido con el código ${codeMatch[0].toUpperCase()}.`;
-    }
-
-    const reply = await askOpenAI(messages, extra);
-    return { reply };
-  },
-  { rate: { max: 30, windowMs: 3_600_000 } },
-);
 
 // --- Panel: sesión --------------------------------------------
 
@@ -1806,9 +2224,13 @@ function startServer() {
   server.listen(env.PORT, () => {
     console.log(`Nocturna Pizza escuchando en http://localhost:${env.PORT}`);
     console.log(`  Entorno:        ${env.NODE_ENV}`);
+    console.log(`  Base de datos:  ${dbEnabled ? 'configurada' : 'deshabilitada (modo estático)'}`);
     console.log(`  Supabase Auth:  ${supabaseAuthReady() ? 'configurado' : 'FALTA (login con Google deshabilitado)'}`);
-    console.log(`  OpenAI:         ${openaiReady() ? 'configurado' : 'FALTA (asistente deshabilitado)'}`);
+    console.log(`  OpenAI:         ${openaiReady() ? `configurado (${ASSISTANT_MODEL})` : 'no configurado (asistente en modo información)'}`);
     console.log(`  Admins:         ${env.ADMIN_EMAILS.length ? env.ADMIN_EMAILS.join(', ') : 'ninguno (revisá ADMIN_EMAILS)'}`);
+    console.log(
+      `  RAG:            ${fs.existsSync(KNOWLEDGE_INDEX) ? 'índice local listo' : 'sin indexar (corré: npm run rag:index)'}`,
+    );
   });
 
   const shutdown = async () => {
@@ -2112,7 +2534,18 @@ async function runSeed() {
 
 const mode = process.argv[2];
 
-if (mode === 'migrate') {
+if (mode === 'rag:index') {
+  buildKnowledgeIndex()
+    .then(() => process.exit(0))
+    .catch((error) => {
+      console.error('[rag] Falló:', error.message);
+      process.exit(1);
+    });
+} else if (mode === 'migrate') {
+  if (!dbEnabled) {
+    console.error('[migrate] Falta DATABASE_URL para usar este comando.');
+    process.exit(1);
+  }
   runMigrations()
     .then(() => pool.end())
     .then(() => process.exit(0))
@@ -2122,6 +2555,10 @@ if (mode === 'migrate') {
       process.exit(1);
     });
 } else if (mode === 'seed') {
+  if (!dbEnabled) {
+    console.error('[seed] Falta DATABASE_URL para usar este comando.');
+    process.exit(1);
+  }
   runSeed()
     .then(() => pool.end())
     .then(() => process.exit(0))
