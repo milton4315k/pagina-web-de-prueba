@@ -6,7 +6,7 @@
 > Precios en pesos argentinos (ARS). Todas las pizzas son para una persona
 > (8 porciones) salvo que se indique otra cosa.
 >
-> **Precios actualizados:** [COMPLETAR FECHA]
+> **Precios actualizados:** octubre 2026
 
 ## Clásicas
 
@@ -27,7 +27,11 @@
 
 ## Extras y bebidas
 
-- [COMPLETAR: bebidas, postres, extras, tamaño grande, etc.]
+- **Empanada** — $1.300. Jamón y queso, pollo, carne o matambre.
+- **Fainá** (porción) — $2.500.
+- **Cheeseburger** — $5.500.
+- **Coca-Cola grande** — $4.500.
+- **Otras bebidas** — $2.500 (500 ml) / $3.500 (1,5 L). Fanta, Sprite, Manaos, etc.
 
 ## Condiciones
 

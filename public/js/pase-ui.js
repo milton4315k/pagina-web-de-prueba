@@ -316,7 +316,7 @@ function renderWelcomeStep(pass) {
 function renderPass(pass) {
   const birthday = formatBirthday(pass.birthday);
   const cumple = pass.birthdayActive
-    ? '<p class="pase-birthday">🎂 ¡Feliz cumpleaños! Tenés postre sin cargo esta semana.</p>'
+    ? '<p class="pase-birthday">🎂 ¡Feliz cumpleaños! Comprá algo hoy y te regalamos una mini torta de la casa.</p>'
     : birthday
       ? `<p class="pase-birthday-note">Tu cumpleaños es el ${escapeHtml(birthday)}.</p>`
       : '';

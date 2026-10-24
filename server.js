@@ -253,8 +253,8 @@ function parseWith(schema, data) {
 const RULES = {
   welcomePoints: 20,
   pointsPerPeso: 1000,
-  birthdayWindowBefore: 3,
-  birthdayWindowAfter: 3,
+  birthdayWindowBefore: 0,
+  birthdayWindowAfter: 0,
 };
 
 const BENEFITS = [
@@ -279,8 +279,8 @@ const BENEFITS = [
   {
     key: 'birthday',
     threshold: null,
-    label: 'Postre de la casa sin cargo',
-    description: 'Válido durante la semana de tu cumpleaños.',
+    label: 'Mini torta de la casa de regalo',
+    description: 'Válido solo el día de tu cumpleaños, con tu compra.',
   },
 ];
 
@@ -1054,8 +1054,8 @@ function buildPass(member) {
         available: birthdayActive && !redeemed.has('birthday'),
         reason: birthdayActive
           ? redeemed.has('birthday')
-            ? 'Ya usaste el postre de este año.'
-            : '¡Feliz cumpleaños! Tenés postre sin cargo.'
+            ? 'Ya usaste el regalo de este año.'
+            : '¡Feliz cumpleaños! Con tu compra te regalamos una mini torta de la casa.'
           : member.birthday
             ? `Tu cumpleaños es el ${formatBirthdayEs(member.birthday)}.`
             : 'Agregá tu fecha de cumpleaños para recibirlo.',

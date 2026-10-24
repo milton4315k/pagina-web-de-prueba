@@ -184,7 +184,7 @@ con el pedido del pase a mano: el botón nunca queda mudo.
 | 20 (bienvenida) | 10% OFF en el primer pedido |
 | 50 | Fainá o bebida a elección |
 | 100 | Margherita gratis |
-| Cumpleaños | Postre sin cargo, 3 días antes a 3 días después |
+| Cumpleaños | Mini torta de la casa, solo el día del cumpleaños y con una compra |
 
 Un punto por cada **$1.000** gastados, redondeando hacia abajo. Se acreditan
 cuando el panel marca el pedido como **entregado**; si se lo saca de entregado,

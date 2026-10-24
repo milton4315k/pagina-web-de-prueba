@@ -24,7 +24,7 @@ export const PASSE_RULES = {
     { key: 'welcome', threshold: 0, label: '10% OFF en tu primer pedido' },
     { key: 'drink', threshold: 50, label: 'Fainá o bebida a elección' },
     { key: 'margherita', threshold: 100, label: 'Margherita gratis' },
-    { key: 'birthday', threshold: null, label: 'Postre de la casa sin cargo' },
+    { key: 'birthday', threshold: null, label: 'Mini torta de la casa (el día de tu cumple, con tu compra)' },
   ],
 };
 
@@ -164,7 +164,7 @@ export function buildOrderMessageWithPass({ pass, name, order, method, contact, 
     `Quiero pedir: ${order}.`,
     `Modalidad: ${METHOD_LABELS[method] || method || 'una consulta'}.`,
     benefit('welcome')?.available ? 'Quiero canjear mi 10% OFF de bienvenida.' : '',
-    benefit('birthday')?.available ? 'Hoy es mi cumpleaños, quiero el postre sin cargo.' : '',
+    benefit('birthday')?.available ? 'Hoy es mi cumpleaños, quiero la mini torta de regalo.' : '',
     contact ? `Contacto: ${contact}.` : '',
     notes ? `Detalle: ${notes}` : '',
     '¿Me confirmás disponibilidad y forma de pago?',
